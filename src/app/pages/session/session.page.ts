@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import { DbService } from '../../services/db';
@@ -58,6 +58,9 @@ export class SessionPage implements OnInit, OnDestroy {
   /** Error state */
   loadError = false;
 
+  /** Finishing session in progress */
+  isFinishing = false;
+
   /** Subject for debounced set updates */
   private setUpdateSubject = new Subject<PendingSetUpdate>();
 
@@ -66,6 +69,7 @@ export class SessionPage implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private db: DbService,
     private modalController: ModalController
   ) {
@@ -233,6 +237,29 @@ export class SessionPage implements OnInit, OnDestroy {
       });
     } catch (error) {
       console.error('Failed to add exercise to session:', error);
+    }
+  }
+
+  /**
+   * Finish the current session.
+   * Updates endedAt and updatedAt, then navigates to summary.
+   */
+  async finishSession(): Promise<void> {
+    if (!this.session || this.isFinishing) return;
+
+    this.isFinishing = true;
+    try {
+      const now = new Date().toISOString();
+      this.session.endedAt = now;
+      this.session.updatedAt = now;
+
+      await this.db.updateSession(this.session);
+
+      // Navigate to session summary
+      this.router.navigate(['/session', this.session.id, 'summary']);
+    } catch (error) {
+      console.error('Failed to finish session:', error);
+      this.isFinishing = false;
     }
   }
 

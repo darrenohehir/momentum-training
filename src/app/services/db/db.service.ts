@@ -170,6 +170,13 @@ export class DbService extends Dexie {
     return this.sessions.get(id);
   }
 
+  /**
+   * Update an existing session.
+   */
+  async updateSession(session: Session): Promise<void> {
+    await this.sessions.put(session);
+  }
+
   // ============================================
   // Exercise queries
   // ============================================

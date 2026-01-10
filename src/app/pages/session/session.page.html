@@ -189,5 +189,16 @@
         Add Exercise
       </ion-button>
     </div>
+
+    <!-- Finish Session Button -->
+    <ion-button
+      expand="block"
+      class="finish-session-button"
+      (click)="finishSession()"
+      [disabled]="isFinishing"
+    >
+      <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
+      {{ isFinishing ? 'Finishing...' : 'Finish Session' }}
+    </ion-button>
   </ng-container>
 </ion-content>

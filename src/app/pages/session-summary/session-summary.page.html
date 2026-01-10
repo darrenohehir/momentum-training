@@ -1,0 +1,98 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Session Summary</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Loading State -->
+  <ng-container *ngIf="isLoading">
+    <div class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading summary...</p>
+    </div>
+  </ng-container>
+
+  <!-- Error State -->
+  <ng-container *ngIf="!isLoading && loadError">
+    <div class="error-state">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <h2>Session not found</h2>
+      <p>Unable to load session summary.</p>
+      <ion-button (click)="goHome()" fill="outline">
+        Return Home
+      </ion-button>
+    </div>
+  </ng-container>
+
+  <!-- Summary Content -->
+  <ng-container *ngIf="!isLoading && !loadError && session">
+    <!-- Success Icon -->
+    <div class="success-header">
+      <ion-icon name="checkmark-circle" color="success"></ion-icon>
+      <h1>Session Complete</h1>
+    </div>
+
+    <!-- Session Stats Card -->
+    <ion-card class="stats-card">
+      <ion-card-content>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-label">Date</span>
+            <span class="stat-value">{{ formatDate(session.startedAt) }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Started</span>
+            <span class="stat-value">{{ formatTime(session.startedAt) }}</span>
+          </div>
+          <div class="stat-item" *ngIf="session.endedAt">
+            <span class="stat-label">Ended</span>
+            <span class="stat-value">{{ formatTime(session.endedAt) }}</span>
+          </div>
+          <div class="stat-item" *ngIf="session.endedAt">
+            <span class="stat-label">Duration</span>
+            <span class="stat-value">{{ getDurationMinutes() }} min</span>
+          </div>
+        </div>
+
+        <div class="quest-label" *ngIf="getQuestLabel(session.questId) as questLabel">
+          <ion-chip>
+            <ion-icon name="fitness-outline"></ion-icon>
+            <ion-label>{{ questLabel }}</ion-label>
+          </ion-chip>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Exercises Summary -->
+    <div class="exercises-summary" *ngIf="exercises.length > 0">
+      <h2>Exercises Performed</h2>
+      <p class="total-stats">{{ exercises.length }} exercises · {{ getTotalSets() }} sets</p>
+
+      <ion-list>
+        <ion-item *ngFor="let exercise of exercises">
+          <ion-label>
+            <h2>{{ exercise.name }}</h2>
+            <p>{{ formatCategory(exercise.category) }}</p>
+          </ion-label>
+          <ion-note slot="end">{{ exercise.setCount }} sets</ion-note>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <!-- No Exercises State -->
+    <div class="no-exercises" *ngIf="exercises.length === 0">
+      <p>No exercises were logged in this session.</p>
+    </div>
+
+    <!-- Done Button -->
+    <ion-button
+      expand="block"
+      class="done-button"
+      (click)="goHome()"
+    >
+      Done
+    </ion-button>
+  </ng-container>
+</ion-content>
+

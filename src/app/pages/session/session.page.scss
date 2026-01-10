@@ -247,3 +247,10 @@
 .add-exercise-button {
   margin-top: 8px;
 }
+
+/* Finish session button */
+.finish-session-button {
+  margin-top: 24px;
+  --background: var(--ion-color-success);
+  --background-hover: var(--ion-color-success-shade);
+}

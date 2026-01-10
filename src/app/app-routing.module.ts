@@ -21,6 +21,10 @@ const routes: Routes = [
     loadChildren: () => import('./pages/session/session.module').then(m => m.SessionPageModule)
   },
   {
+    path: 'session/:id/summary',
+    loadChildren: () => import('./pages/session-summary/session-summary.module').then(m => m.SessionSummaryPageModule)
+  },
+  {
     path: 'bodyweight',
     loadChildren: () => import('./pages/bodyweight/bodyweight.module').then(m => m.BodyweightPageModule)
   },
