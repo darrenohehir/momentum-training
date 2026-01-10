@@ -22,6 +22,10 @@ Offline-first personal workout logger with momentum-based gamification. Designed
 
 No authentication, no cloud sync, no social features.
 
+## Current Status
+
+App shell + dark theme + seeded exercises displayed from IndexedDB (offline-first). Sessions/logging next.
+
 ## Local Development
 
 Requires **Node.js 20.19.0+**.
@@ -39,4 +43,3 @@ npm run build     # Outputs to www/
 ```
 
 Serve the `www/` directory with any static file server to test PWA functionality.
-
