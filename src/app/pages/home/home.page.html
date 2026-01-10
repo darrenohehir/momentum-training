@@ -1,10 +1,80 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Home</ion-title>
+    <ion-title>Momentum</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <p>Home dashboard placeholder</p>
-</ion-content>
+  <!-- Primary CTA -->
+  <ion-button expand="block" size="large" class="start-session-btn" routerLink="/start-session">
+    Start Session
+  </ion-button>
 
+  <!-- Momentum Status -->
+  <ion-card class="status-card">
+    <ion-card-header>
+      <ion-card-subtitle>Momentum</ion-card-subtitle>
+      <ion-card-title class="momentum-status">Active</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p class="days-remaining">5 days remaining</p>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- XP / Level -->
+  <ion-card class="status-card">
+    <ion-card-header>
+      <ion-card-subtitle>Progress</ion-card-subtitle>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="xp-level-row">
+        <div class="stat">
+          <span class="stat-value">1,250</span>
+          <span class="stat-label">XP</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">2</span>
+          <span class="stat-label">Level</span>
+        </div>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Last Sessions -->
+  <div class="section-header">
+    <h2>Recent Sessions</h2>
+  </div>
+
+  <ion-list class="sessions-list">
+    <ion-item>
+      <ion-label>
+        <h3>Upper Body</h3>
+        <p>Jan 9, 2026 · 45 min · 320 XP</p>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label>
+        <h3>Full Body</h3>
+        <p>Jan 7, 2026 · 52 min · 385 XP</p>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label>
+        <h3>Quick Session</h3>
+        <p>Jan 5, 2026 · 28 min · 210 XP</p>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label>
+        <h3>Lower Body</h3>
+        <p>Jan 3, 2026 · 38 min · 295 XP</p>
+      </ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label>
+        <h3>Full Body</h3>
+        <p>Jan 1, 2026 · 55 min · 410 XP</p>
+      </ion-label>
+    </ion-item>
+  </ion-list>
+</ion-content>

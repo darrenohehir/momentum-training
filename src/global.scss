@@ -1,12 +1,8 @@
 /*
- * App Global CSS
+ * Momentum - Global Styles
  * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
+ * Dark "instrument panel" theme applied globally.
+ * See DESIGN.md for color system and guidelines.
  */
 
 /* Core CSS required for Ionic components to work properly */
@@ -18,20 +14,96 @@
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
 
-/* Optional CSS utils that can be commented out */
+/* Optional CSS utils */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+/* ============================================
+   Global Overrides (minimal)
+   ============================================ */
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+/**
+ * Ensure ion-content uses the dark background
+ */
+ion-content {
+  --background: var(--ion-background-color);
+}
+
+/**
+ * Card styling - surface contrast
+ */
+ion-card {
+  --background: var(--ion-card-background);
+  --color: var(--ion-text-color);
+}
+
+/**
+ * List and item styling - surface contrast
+ */
+ion-list {
+  --ion-item-background: var(--ion-item-background);
+}
+
+ion-item {
+  --background: var(--ion-item-background);
+  --color: var(--ion-text-color);
+  --border-color: var(--ion-border-color);
+}
+
+/**
+ * Toolbar styling
+ */
+ion-toolbar {
+  --background: var(--ion-toolbar-background);
+  --color: var(--ion-toolbar-color);
+  --border-color: var(--ion-border-color);
+}
+
+/**
+ * Tab bar styling
+ */
+ion-tab-bar {
+  --background: var(--ion-tab-bar-background);
+  --color: var(--ion-tab-bar-color);
+  --border: 1px solid var(--ion-border-color);
+}
+
+ion-tab-button {
+  --color: var(--ion-tab-bar-color);
+  --color-selected: var(--ion-tab-bar-color-selected);
+}
+
+/**
+ * Primary button - uses accent color
+ */
+ion-button {
+  --border-radius: 8px;
+}
+
+/**
+ * Input fields
+ */
+ion-input,
+ion-textarea {
+  --background: var(--ion-item-background);
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--ion-color-step-500);
+}
+
+/**
+ * Labels - secondary text for subtitles
+ */
+ion-card-subtitle,
+ion-note {
+  color: var(--ion-color-step-600);
+}
+
+/**
+ * Back button
+ */
+ion-back-button {
+  --color: var(--ion-text-color);
+}

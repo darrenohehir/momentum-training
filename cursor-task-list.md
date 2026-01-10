@@ -86,6 +86,17 @@ Include:
   - Last sessions list placeholder
 - No real logic yet—just structure.
 
+### Task 2.3 - Apply global theme tokens (minimal)
+
+- Implement `variables.scss` based on `DESIGN.md`:
+  - background
+  - text colors
+  - primary accent
+- Add only a couple of global overrides:
+  - `ion-content` background
+  - card/list surface background
+- No component redesign; just make the app “dark instrument panel” globally.
+
 ---
 
 ## Phase 3 – Sessions & Logging (Core Loop)
