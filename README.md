@@ -24,7 +24,7 @@ No authentication, no cloud sync, no social features.
 
 ## Current Status
 
-App shell + dark theme + seeded exercises displayed from IndexedDB (offline-first). Sessions/logging next.
+App shell + dark theme + exercise library reads from IndexedDB. Start Session flow creates a session and routes to the session page. Set logging next.
 
 ## Local Development
 
