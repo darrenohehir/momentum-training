@@ -24,7 +24,7 @@ No authentication, no cloud sync, no social features.
 
 ## Current Status
 
-App shell + dark theme + exercise library reads from IndexedDB. Start Session flow creates a session and routes to the session page. Set logging next.
+App shell + dark theme + exercise library from IndexedDB. Sessions with exercise selection and set logging (weight/reps) with auto-save. Finish session flow next.
 
 ## Local Development
 
