@@ -1,0 +1,124 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="view === 'create' ? cancelCreate() : dismiss()">
+        <ion-icon slot="icon-only" [name]="view === 'create' ? 'arrow-back' : 'close'"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ view === 'create' ? 'New Exercise' : 'Add Exercise' }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <!-- List View -->
+  <ng-container *ngIf="view === 'list'">
+    <!-- Search Bar -->
+    <ion-searchbar
+      [(ngModel)]="searchQuery"
+      (ionInput)="onSearchChange()"
+      placeholder="Search exercises..."
+      [debounce]="150"
+    ></ion-searchbar>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="ion-padding">
+      <ion-list>
+        <ion-item *ngFor="let i of [1,2,3,4,5]">
+          <ion-label>
+            <h2><ion-skeleton-text animated style="width: 70%"></ion-skeleton-text></h2>
+            <p><ion-skeleton-text animated style="width: 40%"></ion-skeleton-text></p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </div>
+
+    <!-- Exercise List -->
+    <ion-list *ngIf="!isLoading && filteredExercises.length > 0">
+      <ion-item
+        *ngFor="let exercise of filteredExercises"
+        button
+        (click)="selectExercise(exercise)"
+        detail="true"
+      >
+        <ion-label>
+          <h2>{{ exercise.name }}</h2>
+          <p>{{ formatCategory(exercise.category) }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && filteredExercises.length === 0" class="empty-state ion-padding">
+      <ion-icon name="search-outline"></ion-icon>
+      <p *ngIf="searchQuery">No exercises matching "{{ searchQuery }}"</p>
+      <p *ngIf="!searchQuery">No exercises in library</p>
+    </div>
+
+    <!-- Create New Button -->
+    <div class="create-button-container ion-padding">
+      <ion-button expand="block" fill="outline" (click)="showCreateForm()">
+        <ion-icon slot="start" name="add-outline"></ion-icon>
+        Create New Exercise
+      </ion-button>
+    </div>
+  </ng-container>
+
+  <!-- Create View -->
+  <ng-container *ngIf="view === 'create'">
+    <div class="ion-padding">
+      <ion-list>
+        <ion-item>
+          <ion-input
+            label="Exercise Name"
+            labelPlacement="stacked"
+            placeholder="e.g. Bench Press"
+            [(ngModel)]="newExerciseName"
+            [clearInput]="true"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-select
+            label="Category"
+            labelPlacement="stacked"
+            [(ngModel)]="newExerciseCategory"
+            interface="action-sheet"
+          >
+            <ion-select-option
+              *ngFor="let opt of categoryOptions"
+              [value]="opt.value"
+            >
+              {{ opt.label }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <ion-item>
+          <ion-select
+            label="Equipment"
+            labelPlacement="stacked"
+            [(ngModel)]="newExerciseEquipment"
+            interface="action-sheet"
+          >
+            <ion-select-option
+              *ngFor="let opt of equipmentOptions"
+              [value]="opt.value"
+            >
+              {{ opt.label }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+      </ion-list>
+
+      <ion-button
+        expand="block"
+        class="ion-margin-top"
+        [disabled]="!isCreateFormValid"
+        (click)="createExercise()"
+      >
+        Create & Add to Session
+      </ion-button>
+    </div>
+  </ng-container>
+</ion-content>
+

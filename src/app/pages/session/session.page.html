@@ -44,10 +44,54 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- Placeholder for exercises (next task) -->
-    <div class="exercises-placeholder">
-      <ion-icon name="barbell-outline"></ion-icon>
-      <p>Exercise selection coming next...</p>
+    <!-- Exercises Section -->
+    <div class="exercises-section">
+      <div class="section-header">
+        <h2>Exercises</h2>
+        <span class="exercise-count" *ngIf="sessionExercises.length > 0">
+          {{ sessionExercises.length }}
+        </span>
+      </div>
+
+      <!-- Loading exercises -->
+      <div *ngIf="isLoadingExercises" class="ion-padding-vertical">
+        <ion-list>
+          <ion-item *ngFor="let i of [1,2]">
+            <ion-label>
+              <h2><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></h2>
+              <p><ion-skeleton-text animated style="width: 40%"></ion-skeleton-text></p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+      </div>
+
+      <!-- Exercise List -->
+      <ion-list *ngIf="!isLoadingExercises && sessionExercises.length > 0" class="exercise-list">
+        <ion-item *ngFor="let item of sessionExercises; let i = index">
+          <ion-label>
+            <h2>{{ item.exercise.name }}</h2>
+            <p>{{ formatCategory(item.exercise.category) }}</p>
+          </ion-label>
+          <ion-note slot="end" class="exercise-index">{{ i + 1 }}</ion-note>
+        </ion-item>
+      </ion-list>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoadingExercises && sessionExercises.length === 0" class="exercises-empty">
+        <ion-icon name="barbell-outline"></ion-icon>
+        <p>No exercises added yet</p>
+      </div>
+
+      <!-- Add Exercise Button -->
+      <ion-button
+        expand="block"
+        fill="outline"
+        class="add-exercise-button"
+        (click)="openExercisePicker()"
+      >
+        <ion-icon slot="start" name="add-outline"></ion-icon>
+        Add Exercise
+      </ion-button>
     </div>
   </ng-container>
 </ion-content>

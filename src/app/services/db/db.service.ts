@@ -169,4 +169,66 @@ export class DbService extends Dexie {
   async getSession(id: string): Promise<Session | undefined> {
     return this.sessions.get(id);
   }
+
+  // ============================================
+  // Exercise queries
+  // ============================================
+
+  /**
+   * Get a single exercise by id.
+   */
+  async getExerciseById(id: string): Promise<Exercise | undefined> {
+    return this.exercises.get(id);
+  }
+
+  /**
+   * Get multiple exercises by their ids.
+   * Returns a map of id -> Exercise for efficient lookups.
+   */
+  async getExercisesByIds(ids: string[]): Promise<Map<string, Exercise>> {
+    const exercises = await this.exercises.where('id').anyOf(ids).toArray();
+    return new Map(exercises.map(ex => [ex.id, ex]));
+  }
+
+  /**
+   * Add a new exercise to the library.
+   * @returns The exercise id
+   */
+  async addExercise(exercise: Exercise): Promise<string> {
+    await this.exercises.add(exercise);
+    return exercise.id;
+  }
+
+  // ============================================
+  // SessionExercise queries
+  // ============================================
+
+  /**
+   * Get all session exercises for a session, sorted by orderIndex.
+   */
+  async getSessionExercises(sessionId: string): Promise<SessionExercise[]> {
+    return this.sessionExercises
+      .where('sessionId')
+      .equals(sessionId)
+      .sortBy('orderIndex');
+  }
+
+  /**
+   * Add a session exercise.
+   * @returns The session exercise id
+   */
+  async addSessionExercise(sessionExercise: SessionExercise): Promise<string> {
+    await this.sessionExercises.add(sessionExercise);
+    return sessionExercise.id;
+  }
+
+  /**
+   * Get the next orderIndex for a session (max + 1, or 0 if none).
+   */
+  async getNextOrderIndex(sessionId: string): Promise<number> {
+    const existing = await this.getSessionExercises(sessionId);
+    if (existing.length === 0) return 0;
+    const maxIndex = Math.max(...existing.map(se => se.orderIndex));
+    return maxIndex + 1;
+  }
 }

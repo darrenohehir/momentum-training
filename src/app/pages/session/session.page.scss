@@ -36,20 +36,73 @@
   margin-bottom: 24px;
 }
 
-.exercises-placeholder {
+/* Exercises section */
+.exercises-section {
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .exercise-count {
+      background: var(--ion-color-step-150);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+  }
+}
+
+.exercise-list {
+  background: transparent;
+  margin-bottom: 16px;
+
+  ion-item {
+    --background: var(--ion-color-step-100);
+    margin-bottom: 8px;
+    border-radius: 8px;
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    p {
+      font-size: 0.85rem;
+      opacity: 0.6;
+    }
+  }
+
+  .exercise-index {
+    font-size: 0.85rem;
+    opacity: 0.4;
+    min-width: 24px;
+    text-align: center;
+  }
+}
+
+.exercises-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 48px 24px;
-  border: 1px dashed var(--ion-border-color);
+  padding: 32px 24px;
+  border: 1px dashed var(--ion-color-step-150);
   border-radius: 8px;
+  margin-bottom: 16px;
 
   ion-icon {
-    font-size: 48px;
+    font-size: 40px;
     opacity: 0.2;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   p {
@@ -57,4 +110,8 @@
     opacity: 0.5;
     font-size: 0.9rem;
   }
+}
+
+.add-exercise-button {
+  margin-top: 8px;
 }
