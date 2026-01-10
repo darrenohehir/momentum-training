@@ -4,7 +4,37 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding">
-  <p>Exercise library placeholder</p>
-</ion-content>
+<ion-content>
+  <!-- Loading State -->
+  <ng-container *ngIf="isLoading">
+    <ion-list>
+      <ion-item *ngFor="let i of [1, 2, 3, 4, 5]">
+        <ion-label>
+          <ion-skeleton-text [animated]="true" style="width: 60%"></ion-skeleton-text>
+          <ion-skeleton-text [animated]="true" style="width: 30%"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
 
+  <!-- Empty State -->
+  <ng-container *ngIf="!isLoading && exercises.length === 0">
+    <div class="empty-state">
+      <ion-icon name="barbell-outline" class="empty-icon"></ion-icon>
+      <h2>No exercises yet</h2>
+      <p>Exercises will appear here once you add them during a session.</p>
+    </div>
+  </ng-container>
+
+  <!-- Exercise List -->
+  <ng-container *ngIf="!isLoading && exercises.length > 0">
+    <ion-list>
+      <ion-item *ngFor="let exercise of exercises">
+        <ion-label>
+          <h2>{{ exercise.name }}</h2>
+          <p>{{ formatCategory(exercise.category) }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+</ion-content>

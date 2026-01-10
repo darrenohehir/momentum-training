@@ -138,4 +138,15 @@ export class DbService extends Dexie {
       }
     );
   }
+
+  // ============================================
+  // Exercise queries
+  // ============================================
+
+  /**
+   * Get all exercises sorted by name (ascending).
+   */
+  async getAllExercises(): Promise<Exercise[]> {
+    return this.exercises.orderBy('name').toArray();
+  }
 }

@@ -101,20 +101,27 @@ Include:
 
 ## Phase 3 – Sessions & Logging (Core Loop)
 
-### Task 3.1 – Start Session flow
+### Task 3.1 – Exercise Library (read-only)
+
+- Read exercises from IndexedDB.
+- Display in Exercises tab as a list (name + category).
+- Handle loading + empty state.
+- No create/edit/delete yet.
+
+### Task 3.2 – Start Session flow
 
 - “Start Session” creates a Session record with startedAt.
 - Allow optional Quest selection (preset list only).
 - Navigate to Session In Progress.
 
-### Task 3.2 – Exercise selection
+### Task 3.3 – Exercise selection
 
 - In-session:
   - Add exercise from library
   - Create new exercise inline if not found
 - Create SessionExercise records with orderIndex.
 
-### Task 3.3 – Set logging UI
+### Task 3.4 – Set logging UI
 
 - For each SessionExercise:
   - Display list of sets
@@ -123,7 +130,7 @@ Include:
   - Optional RPE toggle (hidden by default)
 - Persist sets to IndexedDB as user logs.
 
-### Task 3.4 – Finish Session
+### Task 3.5 – Finish Session
 
 - Mark endedAt
 - Navigate to Session Summary screen
@@ -157,7 +164,7 @@ Include:
 ### Task 5.1 – Momentum calculation
 
 - Implement rolling 7-day momentum logic:
-  - Active if latest session date ≤ now − 7 days
+  - Active if latest session date >= (now - 7 days)
 - Calculate:
   - Momentum status (Active / Paused)
   - Days remaining in window
