@@ -8,6 +8,27 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <p>Start session placeholder</p>
-</ion-content>
+  <!-- Quest Selection -->
+  <div class="section-label">Select a Quest (optional)</div>
 
+  <ion-radio-group [(ngModel)]="selectedQuestId">
+    <ion-list>
+      <ion-item *ngFor="let quest of questOptions">
+        <ion-radio [value]="quest.id" justify="start" labelPlacement="end">
+          {{ quest.label }}
+        </ion-radio>
+      </ion-item>
+    </ion-list>
+  </ion-radio-group>
+
+  <!-- Start Button -->
+  <ion-button
+    expand="block"
+    size="large"
+    class="start-btn"
+    [disabled]="isStarting"
+    (click)="startSession()">
+    <ion-spinner *ngIf="isStarting" name="crescent"></ion-spinner>
+    <span *ngIf="!isStarting">Start Session</span>
+  </ion-button>
+</ion-content>

@@ -5,6 +5,49 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <p>Session in progress placeholder</p>
-</ion-content>
+  <!-- Loading State -->
+  <ng-container *ngIf="isLoading">
+    <div class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading session...</p>
+    </div>
+  </ng-container>
 
+  <!-- Error State -->
+  <ng-container *ngIf="!isLoading && loadError">
+    <div class="error-state">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <h2>Session not found</h2>
+      <p>Unable to load this session.</p>
+      <ion-button routerLink="/tabs/home" fill="outline">
+        Return Home
+      </ion-button>
+    </div>
+  </ng-container>
+
+  <!-- Session Info -->
+  <ng-container *ngIf="!isLoading && !loadError && session">
+    <ion-card class="session-info-card">
+      <ion-card-header>
+        <ion-card-subtitle>
+          {{ formatStartDate(session.startedAt) }}
+        </ion-card-subtitle>
+        <ion-card-title>
+          Started at {{ formatStartTime(session.startedAt) }}
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content *ngIf="getQuestLabel(session.questId) as questLabel">
+        <ion-chip>
+          <ion-icon name="fitness-outline"></ion-icon>
+          <ion-label>{{ questLabel }}</ion-label>
+        </ion-chip>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Placeholder for exercises (next task) -->
+    <div class="exercises-placeholder">
+      <ion-icon name="barbell-outline"></ion-icon>
+      <p>Exercise selection coming next...</p>
+    </div>
+  </ng-container>
+</ion-content>

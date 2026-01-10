@@ -1,2 +1,60 @@
 /* Session page styles */
 
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  height: 60%;
+
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+
+  ion-icon {
+    font-size: 64px;
+    opacity: 0.3;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    margin: 0 0 8px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0 0 24px 0;
+    opacity: 0.6;
+  }
+}
+
+.session-info-card {
+  margin-bottom: 24px;
+}
+
+.exercises-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  border: 1px dashed var(--ion-border-color);
+  border-radius: 8px;
+
+  ion-icon {
+    font-size: 48px;
+    opacity: 0.2;
+    margin-bottom: 12px;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.5;
+    font-size: 0.9rem;
+  }
+}

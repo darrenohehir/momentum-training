@@ -149,4 +149,24 @@ export class DbService extends Dexie {
   async getAllExercises(): Promise<Exercise[]> {
     return this.exercises.orderBy('name').toArray();
   }
+
+  // ============================================
+  // Session queries
+  // ============================================
+
+  /**
+   * Create a new session and persist to IndexedDB.
+   * @returns The session id
+   */
+  async createSession(session: Session): Promise<string> {
+    await this.sessions.add(session);
+    return session.id;
+  }
+
+  /**
+   * Get a session by id.
+   */
+  async getSession(id: string): Promise<Session | undefined> {
+    return this.sessions.get(id);
+  }
 }
