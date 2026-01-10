@@ -1,9 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ModalController } from '@ionic/angular';
-import { Session, SessionExercise, Exercise, QuestId } from '../../models';
+import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import { DbService } from '../../services/db';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
+import { Subject } from 'rxjs';
+import { debounceTime, takeUntil } from 'rxjs/operators';
 
 /** Map quest IDs to display labels */
 const QUEST_LABELS: Record<QuestId, string> = {
@@ -13,12 +15,25 @@ const QUEST_LABELS: Record<QuestId, string> = {
   'lower': 'Lower Body'
 };
 
+/** Debounce time for auto-save while typing (ms) */
+const AUTOSAVE_DEBOUNCE_MS = 300;
+
 /**
- * Combined view model for displaying session exercises with their details.
+ * Combined view model for displaying session exercises with their details and sets.
  */
 interface SessionExerciseView {
   sessionExercise: SessionExercise;
   exercise: Exercise;
+  sets: Set[];
+  showRpe: boolean;
+  isLoadingSets: boolean;
+}
+
+/**
+ * Pending set update for debouncing.
+ */
+interface PendingSetUpdate {
+  set: Set;
 }
 
 @Component({
@@ -27,7 +42,7 @@ interface SessionExerciseView {
   styleUrls: ['./session.page.scss'],
   standalone: false
 })
-export class SessionPage implements OnInit {
+export class SessionPage implements OnInit, OnDestroy {
   /** Current session loaded from DB */
   session: Session | null = null;
 
@@ -43,11 +58,30 @@ export class SessionPage implements OnInit {
   /** Error state */
   loadError = false;
 
+  /** Subject for debounced set updates */
+  private setUpdateSubject = new Subject<PendingSetUpdate>();
+
+  /** Destroy subject for cleanup */
+  private destroy$ = new Subject<void>();
+
   constructor(
     private route: ActivatedRoute,
     private db: DbService,
     private modalController: ModalController
-  ) {}
+  ) {
+    // Set up debounced auto-save for set updates
+    this.setUpdateSubject.pipe(
+      debounceTime(AUTOSAVE_DEBOUNCE_MS),
+      takeUntil(this.destroy$)
+    ).subscribe(update => {
+      this.persistSet(update.set);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   async ngOnInit(): Promise<void> {
     const sessionId = this.route.snapshot.paramMap.get('id');
@@ -102,21 +136,54 @@ export class SessionPage implements OnInit {
       const exerciseIds = sessionExercises.map(se => se.exerciseId);
       const exerciseMap = await this.db.getExercisesByIds(exerciseIds);
 
-      // Combine into view models
+      // Combine into view models with empty sets (will load lazily)
       this.sessionExercises = sessionExercises
-        .map(se => {
+        .map((se): SessionExerciseView | null => {
           const exercise = exerciseMap.get(se.exerciseId);
           if (!exercise) {
             console.warn(`Exercise not found for id: ${se.exerciseId}`);
             return null;
           }
-          return { sessionExercise: se, exercise };
+          return {
+            sessionExercise: se,
+            exercise,
+            sets: [] as Set[],
+            showRpe: false,
+            isLoadingSets: true
+          };
         })
         .filter((item): item is SessionExerciseView => item !== null);
+
+      // Load sets for all exercises
+      await this.loadAllSets();
     } catch (error) {
       console.error('Failed to load session exercises:', error);
     } finally {
       this.isLoadingExercises = false;
+    }
+  }
+
+  /**
+   * Load sets for all session exercises.
+   */
+  private async loadAllSets(): Promise<void> {
+    await Promise.all(
+      this.sessionExercises.map(item => this.loadSetsForExercise(item))
+    );
+  }
+
+  /**
+   * Load sets for a specific session exercise.
+   */
+  private async loadSetsForExercise(item: SessionExerciseView): Promise<void> {
+    item.isLoadingSets = true;
+    try {
+      item.sets = await this.db.getSetsForSessionExercise(item.sessionExercise.id);
+    } catch (error) {
+      console.error(`Failed to load sets for exercise ${item.sessionExercise.id}:`, error);
+      item.sets = [];
+    } finally {
+      item.isLoadingSets = false;
     }
   }
 
@@ -159,12 +226,157 @@ export class SessionPage implements OnInit {
       // Add to local list immediately (optimistic update)
       this.sessionExercises.push({
         sessionExercise,
-        exercise
+        exercise,
+        sets: [] as Set[],
+        showRpe: false,
+        isLoadingSets: false
       });
     } catch (error) {
       console.error('Failed to add exercise to session:', error);
-      // TODO: Show error toast
     }
+  }
+
+  // ============================================
+  // Set management
+  // ============================================
+
+  /**
+   * Add a new set to a session exercise.
+   */
+  async addSet(item: SessionExerciseView): Promise<void> {
+    try {
+      const setIndex = await this.db.getNextSetIndex(item.sessionExercise.id);
+      const newSet: Set = {
+        id: crypto.randomUUID(),
+        sessionExerciseId: item.sessionExercise.id,
+        setIndex,
+        createdAt: new Date().toISOString()
+      };
+
+      await this.db.addSet(newSet);
+
+      // Add to local list immediately
+      item.sets.push(newSet);
+    } catch (error) {
+      console.error('Failed to add set:', error);
+    }
+  }
+
+  /**
+   * Remove a set from a session exercise.
+   */
+  async removeSet(item: SessionExerciseView, set: Set): Promise<void> {
+    try {
+      await this.db.deleteSet(set.id);
+
+      // Remove from local list
+      const index = item.sets.findIndex(s => s.id === set.id);
+      if (index !== -1) {
+        item.sets.splice(index, 1);
+      }
+
+      // Reindex remaining sets
+      await this.db.reindexSets(item.sessionExercise.id);
+
+      // Update local setIndex values to match
+      item.sets.forEach((s, i) => {
+        s.setIndex = i;
+      });
+    } catch (error) {
+      console.error('Failed to remove set:', error);
+    }
+  }
+
+  /**
+   * Toggle RPE visibility for an exercise.
+   */
+  toggleRpe(item: SessionExerciseView): void {
+    item.showRpe = !item.showRpe;
+  }
+
+  // ============================================
+  // Input change handlers (debounced auto-save)
+  // ============================================
+
+  /**
+   * Handle weight input change (debounced).
+   */
+  onWeightChange(set: Set, value: string): void {
+    set.weight = this.parseWeight(value);
+    this.queueSetUpdate(set);
+  }
+
+  /**
+   * Handle reps input change (debounced).
+   */
+  onRepsChange(set: Set, value: string): void {
+    set.reps = this.parseReps(value);
+    this.queueSetUpdate(set);
+  }
+
+  /**
+   * Handle RPE input change (debounced).
+   */
+  onRpeChange(set: Set, value: string): void {
+    set.rpe = this.parseRpe(value);
+    this.queueSetUpdate(set);
+  }
+
+  /**
+   * Handle input blur - persist immediately.
+   */
+  onInputBlur(set: Set): void {
+    this.persistSet(set);
+  }
+
+  /**
+   * Queue a set update for debounced persistence.
+   */
+  private queueSetUpdate(set: Set): void {
+    this.setUpdateSubject.next({ set });
+  }
+
+  /**
+   * Persist a set to the database.
+   */
+  private async persistSet(set: Set): Promise<void> {
+    try {
+      await this.db.updateSet(set);
+    } catch (error) {
+      console.error('Failed to persist set:', error);
+    }
+  }
+
+  // ============================================
+  // Input parsing helpers
+  // ============================================
+
+  /**
+   * Parse weight input to number or undefined.
+   */
+  private parseWeight(value: string): number | undefined {
+    if (!value || value.trim() === '') return undefined;
+    const num = parseFloat(value);
+    return isNaN(num) ? undefined : num;
+  }
+
+  /**
+   * Parse reps input to integer or undefined.
+   */
+  private parseReps(value: string): number | undefined {
+    if (!value || value.trim() === '') return undefined;
+    const num = parseInt(value, 10);
+    return isNaN(num) ? undefined : num;
+  }
+
+  /**
+   * Parse RPE input to integer (clamped 1-10) or undefined.
+   */
+  private parseRpe(value: string): number | undefined {
+    if (!value || value.trim() === '') return undefined;
+    const num = parseInt(value, 10);
+    if (isNaN(num)) return undefined;
+    return Math.max(1, Math.min(10, num));
   }
 
   /**

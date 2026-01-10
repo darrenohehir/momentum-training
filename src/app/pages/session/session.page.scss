@@ -60,32 +60,164 @@
   }
 }
 
-.exercise-list {
-  background: transparent;
+/* Exercise cards with sets */
+.exercise-cards {
+  margin-bottom: 16px;
+}
+
+.exercise-card {
   margin-bottom: 16px;
 
-  ion-item {
-    --background: var(--ion-color-step-100);
-    margin-bottom: 8px;
-    border-radius: 8px;
+  ion-card-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 
-    h2 {
-      font-size: 1rem;
-      font-weight: 500;
-    }
-
-    p {
-      font-size: 0.85rem;
-      opacity: 0.6;
+    .exercise-number {
+      background: var(--ion-color-primary);
+      color: var(--ion-color-primary-contrast);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
     }
   }
 
-  .exercise-index {
-    font-size: 0.85rem;
-    opacity: 0.4;
-    min-width: 24px;
+  ion-card-content {
+    padding-top: 0;
+  }
+}
+
+/* RPE Toggle */
+.rpe-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+
+  ion-button {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Sets header */
+.sets-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ion-color-step-150);
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Sets list */
+.sets-list {
+  margin-bottom: 8px;
+}
+
+.set-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--ion-color-step-150);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+/* Set columns */
+.set-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.set-label,
+.set-number {
+  width: 40px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.set-number {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.weight-label,
+.weight-input,
+.reps-label,
+.reps-input,
+.rpe-label,
+.rpe-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.weight-input,
+.reps-input,
+.rpe-input {
+  ion-input {
+    --background: var(--ion-color-step-150);
+    --padding-start: 8px;
+    --padding-end: 8px;
+    --padding-top: 6px;
+    --padding-bottom: 6px;
+    border-radius: 6px;
+    font-size: 0.95rem;
     text-align: center;
+    margin: 0 4px;
+    min-height: 36px;
+
+    &::part(native) {
+      text-align: center;
+    }
   }
+}
+
+.action-label,
+.action-col {
+  width: 40px;
+  flex-shrink: 0;
+
+  ion-button {
+    --padding-start: 4px;
+    --padding-end: 4px;
+    margin: 0;
+  }
+}
+
+/* No sets state */
+.no-sets {
+  text-align: center;
+  padding: 16px;
+  opacity: 0.5;
+  font-size: 0.9rem;
+
+  p {
+    margin: 0;
+  }
+}
+
+/* Sets loading */
+.sets-loading {
+  padding: 8px 0;
+}
+
+/* Add set button */
+.add-set-button {
+  margin-top: 8px;
+  --color: var(--ion-color-primary);
 }
 
 .exercises-empty {

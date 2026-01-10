@@ -55,26 +55,122 @@
 
       <!-- Loading exercises -->
       <div *ngIf="isLoadingExercises" class="ion-padding-vertical">
-        <ion-list>
-          <ion-item *ngFor="let i of [1,2]">
-            <ion-label>
-              <h2><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></h2>
-              <p><ion-skeleton-text animated style="width: 40%"></ion-skeleton-text></p>
-            </ion-label>
-          </ion-item>
-        </ion-list>
+        <ion-card *ngFor="let i of [1,2]">
+          <ion-card-header>
+            <ion-card-title><ion-skeleton-text animated style="width: 60%"></ion-skeleton-text></ion-card-title>
+            <ion-card-subtitle><ion-skeleton-text animated style="width: 40%"></ion-skeleton-text></ion-card-subtitle>
+          </ion-card-header>
+        </ion-card>
       </div>
 
-      <!-- Exercise List -->
-      <ion-list *ngIf="!isLoadingExercises && sessionExercises.length > 0" class="exercise-list">
-        <ion-item *ngFor="let item of sessionExercises; let i = index">
-          <ion-label>
-            <h2>{{ item.exercise.name }}</h2>
-            <p>{{ formatCategory(item.exercise.category) }}</p>
-          </ion-label>
-          <ion-note slot="end" class="exercise-index">{{ i + 1 }}</ion-note>
-        </ion-item>
-      </ion-list>
+      <!-- Exercise Cards with Sets -->
+      <div *ngIf="!isLoadingExercises && sessionExercises.length > 0" class="exercise-cards">
+        <ion-card *ngFor="let item of sessionExercises; let exIndex = index" class="exercise-card">
+          <!-- Exercise Header -->
+          <ion-card-header>
+            <ion-card-subtitle>
+              <span class="exercise-number">{{ exIndex + 1 }}</span>
+              {{ formatCategory(item.exercise.category) }}
+            </ion-card-subtitle>
+            <ion-card-title>{{ item.exercise.name }}</ion-card-title>
+          </ion-card-header>
+
+          <ion-card-content>
+            <!-- RPE Toggle -->
+            <div class="rpe-toggle">
+              <ion-button
+                fill="clear"
+                size="small"
+                (click)="toggleRpe(item)"
+                [color]="item.showRpe ? 'primary' : 'medium'"
+              >
+                <ion-icon slot="start" name="speedometer-outline"></ion-icon>
+                {{ item.showRpe ? 'Hide RPE' : 'Show RPE' }}
+              </ion-button>
+            </div>
+
+            <!-- Sets Header -->
+            <div class="sets-header" *ngIf="item.sets.length > 0">
+              <span class="set-col set-label">Set</span>
+              <span class="set-col weight-label">Weight (kg)</span>
+              <span class="set-col reps-label">Reps</span>
+              <span class="set-col rpe-label" *ngIf="item.showRpe">RPE</span>
+              <span class="set-col action-label"></span>
+            </div>
+
+            <!-- Sets Loading -->
+            <div *ngIf="item.isLoadingSets" class="sets-loading">
+              <ion-skeleton-text animated style="width: 100%; height: 40px;"></ion-skeleton-text>
+            </div>
+
+            <!-- Sets List -->
+            <div class="sets-list" *ngIf="!item.isLoadingSets">
+              <div class="set-row" *ngFor="let set of item.sets">
+                <span class="set-col set-number">{{ set.setIndex + 1 }}</span>
+                <div class="set-col weight-input">
+                  <ion-input
+                    type="number"
+                    inputmode="decimal"
+                    placeholder="—"
+                    [value]="set.weight"
+                    (ionInput)="onWeightChange(set, $any($event).target.value)"
+                    (ionBlur)="onInputBlur(set)"
+                  ></ion-input>
+                </div>
+                <div class="set-col reps-input">
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    placeholder="—"
+                    [value]="set.reps"
+                    (ionInput)="onRepsChange(set, $any($event).target.value)"
+                    (ionBlur)="onInputBlur(set)"
+                  ></ion-input>
+                </div>
+                <div class="set-col rpe-input" *ngIf="item.showRpe">
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    placeholder="—"
+                    min="1"
+                    max="10"
+                    [value]="set.rpe"
+                    (ionInput)="onRpeChange(set, $any($event).target.value)"
+                    (ionBlur)="onInputBlur(set)"
+                  ></ion-input>
+                </div>
+                <div class="set-col action-col">
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="danger"
+                    (click)="removeSet(item, set)"
+                  >
+                    <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                  </ion-button>
+                </div>
+              </div>
+
+              <!-- Empty Sets State -->
+              <div *ngIf="item.sets.length === 0" class="no-sets">
+                <p>No sets logged yet</p>
+              </div>
+            </div>
+
+            <!-- Add Set Button -->
+            <ion-button
+              expand="block"
+              fill="clear"
+              size="small"
+              class="add-set-button"
+              (click)="addSet(item)"
+            >
+              <ion-icon slot="start" name="add-outline"></ion-icon>
+              Add Set
+            </ion-button>
+          </ion-card-content>
+        </ion-card>
+      </div>
 
       <!-- Empty State -->
       <div *ngIf="!isLoadingExercises && sessionExercises.length === 0" class="exercises-empty">

@@ -231,4 +231,68 @@ export class DbService extends Dexie {
     const maxIndex = Math.max(...existing.map(se => se.orderIndex));
     return maxIndex + 1;
   }
+
+  // ============================================
+  // Set queries
+  // ============================================
+
+  /**
+   * Get all sets for a session exercise, sorted by setIndex.
+   */
+  async getSetsForSessionExercise(sessionExerciseId: string): Promise<Set[]> {
+    return this.sets
+      .where('sessionExerciseId')
+      .equals(sessionExerciseId)
+      .sortBy('setIndex');
+  }
+
+  /**
+   * Add a new set.
+   * @returns The set id
+   */
+  async addSet(set: Set): Promise<string> {
+    await this.sets.add(set);
+    return set.id;
+  }
+
+  /**
+   * Update an existing set.
+   */
+  async updateSet(set: Set): Promise<void> {
+    await this.sets.put(set);
+  }
+
+  /**
+   * Delete a set by id.
+   */
+  async deleteSet(id: string): Promise<void> {
+    await this.sets.delete(id);
+  }
+
+  /**
+   * Reindex sets for a session exercise so setIndex is contiguous 0..n-1.
+   * Call this after deleting a set to maintain proper ordering.
+   */
+  async reindexSets(sessionExerciseId: string): Promise<void> {
+    const sets = await this.getSetsForSessionExercise(sessionExerciseId);
+    // Update setIndex for each set to be contiguous
+    await this.transaction('rw', this.sets, async () => {
+      for (let i = 0; i < sets.length; i++) {
+        if (sets[i].setIndex !== i) {
+          sets[i].setIndex = i;
+          await this.sets.put(sets[i]);
+        }
+      }
+    });
+  }
+
+  /**
+   * Get the next setIndex for a session exercise (max + 1, or 0 if none).
+   */
+  async getNextSetIndex(sessionExerciseId: string): Promise<number> {
+    const existing = await this.getSetsForSessionExercise(sessionExerciseId);
+    if (existing.length === 0) return 0;
+    const maxIndex = Math.max(...existing.map(s => s.setIndex));
+    return maxIndex + 1;
+  }
 }
