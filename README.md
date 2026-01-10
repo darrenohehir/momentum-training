@@ -24,7 +24,11 @@ No authentication, no cloud sync, no social features.
 
 ## Current Status
 
-App shell + dark theme + exercise library from IndexedDB. Sessions with exercise selection and set logging (weight/reps) with auto-save. Finish session flow next.
+- App shell + dark theme
+- Exercise library from IndexedDB
+- Sessions with exercise selection
+- Set logging (weight/reps) with auto-save
+- Finish session + summary ✅
 
 ## Local Development
 
