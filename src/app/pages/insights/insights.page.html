@@ -1,10 +1,40 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Insights</ion-title>
+    <ion-title>History</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content class="ion-padding">
-  <p>Insights placeholder</p>
-</ion-content>
+  <!-- Loading State -->
+  <ng-container *ngIf="isLoading">
+    <div class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading sessions...</p>
+    </div>
+  </ng-container>
 
+  <!-- Sessions List -->
+  <ng-container *ngIf="!isLoading">
+    <!-- Empty State -->
+    <div *ngIf="sessions.length === 0" class="empty-state">
+      <ion-icon name="calendar-outline"></ion-icon>
+      <h2>No sessions yet</h2>
+      <p>Completed sessions will appear here.</p>
+    </div>
+
+    <!-- Session List -->
+    <ion-list *ngIf="sessions.length > 0">
+      <ion-item
+        *ngFor="let session of sessions"
+        button
+        detail="true"
+        (click)="viewSession(session)"
+      >
+        <ion-label>
+          <h2>{{ formatDate(session.endedAt!) }}</h2>
+          <p *ngIf="getDuration(session) as duration">{{ duration }} min</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+</ion-content>

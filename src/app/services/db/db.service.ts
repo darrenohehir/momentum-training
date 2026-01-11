@@ -190,6 +190,25 @@ export class DbService extends Dexie {
     await this.sessions.put(session);
   }
 
+  /**
+   * Get all completed sessions (where endedAt exists), sorted by endedAt descending.
+   * @param limit Optional limit on number of sessions to return
+   */
+  async getCompletedSessions(limit?: number): Promise<Session[]> {
+    // Dexie doesn't support filtering by "field exists", so we fetch all and filter
+    const allSessions = await this.sessions.toArray();
+    const completedSessions = allSessions
+      .filter(s => s.endedAt !== undefined)
+      .sort((a, b) => {
+        // Sort by endedAt descending (newest first)
+        const aEnd = new Date(a.endedAt!).getTime();
+        const bEnd = new Date(b.endedAt!).getTime();
+        return bEnd - aEnd;
+      });
+
+    return limit ? completedSessions.slice(0, limit) : completedSessions;
+  }
+
   // ============================================
   // Exercise queries
   // ============================================

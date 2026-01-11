@@ -28,10 +28,11 @@ No authentication, no cloud sync, no social features.
 - Exercise library from IndexedDB
 - Sessions with exercise selection
 - Set logging (weight/reps) with auto-save
-- Finish session + summary
+- Finish session + summary with edit option
 - Ghost Mode: previous attempt display + copy sets
 - Exercise removal with undo
 - Exercise reordering (drag-and-drop)
+- Session history (read-only)
 
 ## Local Development
 

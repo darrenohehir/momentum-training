@@ -28,6 +28,11 @@ const routes: Routes = [
     path: 'bodyweight',
     loadChildren: () => import('./pages/bodyweight/bodyweight.module').then(m => m.BodyweightPageModule)
   },
+  // History detail (read-only session view)
+  {
+    path: 'history/:id',
+    loadChildren: () => import('./pages/history-detail/history-detail.module').then(m => m.HistoryDetailPageModule)
+  },
   // Default redirect to tabs/home
   {
     path: '',

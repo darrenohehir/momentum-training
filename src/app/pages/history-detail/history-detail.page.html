@@ -1,0 +1,89 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/insights"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Session Details</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Loading State -->
+  <ng-container *ngIf="isLoading">
+    <div class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading session...</p>
+    </div>
+  </ng-container>
+
+  <!-- Error State -->
+  <ng-container *ngIf="!isLoading && loadError">
+    <div class="error-state">
+      <ion-icon name="alert-circle-outline"></ion-icon>
+      <h2>Session not found</h2>
+      <p>Unable to load this session.</p>
+      <ion-button (click)="goBack()" fill="outline">
+        Go Back
+      </ion-button>
+    </div>
+  </ng-container>
+
+  <!-- Session Content -->
+  <ng-container *ngIf="!isLoading && !loadError && session">
+    <!-- Session Header -->
+    <ion-card class="session-header-card">
+      <ion-card-content>
+        <div class="session-meta">
+          <div class="meta-item">
+            <span class="meta-label">Date</span>
+            <span class="meta-value">{{ formatDate(session.endedAt!) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Time</span>
+            <span class="meta-value">{{ formatTime(session.startedAt) }} – {{ formatTime(session.endedAt!) }}</span>
+          </div>
+          <div class="meta-item" *ngIf="getDurationMinutes() > 0">
+            <span class="meta-label">Duration</span>
+            <span class="meta-value">{{ getDurationMinutes() }} min</span>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Exercises -->
+    <div class="exercises-section" *ngIf="exercises.length > 0">
+      <h2>Exercises</h2>
+
+      <ion-card *ngFor="let item of exercises; let i = index" class="exercise-card">
+        <ion-card-header>
+          <ion-card-subtitle>
+            <span class="exercise-number">{{ i + 1 }}</span>
+            {{ formatCategory(item.exercise.category) }}
+          </ion-card-subtitle>
+          <ion-card-title>{{ item.exercise.name }}</ion-card-title>
+        </ion-card-header>
+
+        <ion-card-content>
+          <!-- Sets List -->
+          <div class="sets-list" *ngIf="item.sets.length > 0">
+            <div class="set-row" *ngFor="let set of item.sets">
+              <span class="set-number">{{ set.setIndex + 1 }}</span>
+              <span class="set-value">{{ formatSet(set) }}</span>
+              <span class="set-rpe" *ngIf="formatRpe(set) as rpe">{{ rpe }}</span>
+            </div>
+          </div>
+
+          <!-- No Sets -->
+          <div class="no-sets" *ngIf="item.sets.length === 0">
+            <p>No sets logged</p>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <!-- No Exercises -->
+    <div class="no-exercises" *ngIf="exercises.length === 0">
+      <p>No exercises were logged in this session.</p>
+    </div>
+  </ng-container>
+</ion-content>

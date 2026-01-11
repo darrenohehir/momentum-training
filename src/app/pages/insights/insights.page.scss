@@ -1,2 +1,69 @@
-/* Insights page styles */
+/* History / Insights page styles */
 
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  height: 60%;
+
+  ion-spinner {
+    margin-bottom: 16px;
+  }
+
+  p {
+    opacity: 0.6;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  height: 60%;
+
+  ion-icon {
+    font-size: 64px;
+    opacity: 0.2;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    margin: 0 0 8px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    opacity: 0.5;
+    font-size: 0.9rem;
+  }
+}
+
+ion-list {
+  background: transparent;
+
+  ion-item {
+    --background: var(--ion-color-step-100);
+    margin-bottom: 8px;
+    border-radius: 8px;
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    p {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      margin: 4px 0 0 0;
+    }
+  }
+}

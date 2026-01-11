@@ -414,13 +414,23 @@ Momentum and future insights rely on history being real, inspectable, and truste
 
 #### Scope
 
-- Simple list of past sessions:
-
-  - Date
+- Show a simple list of **completed** sessions only:
+  - Include sessions where `endedAt` exists
+  - Sort newest first (by `endedAt` desc)
+- Each list item shows:
+  - Date (required)
   - Duration (optional)
+- Tap → view session details in **read-only** mode:
+  - Show session header (date/time, duration)
+  - Show exercises and sets logged (weight/reps/RPE where present)
 
-- Tap → view session
-- Read-only is acceptable for MVP
+---
+
+#### Guardrails
+
+- Read-only is acceptable for MVP (no editing from history).
+- Do not include insights or evaluative metrics (no totals, PRs, comparisons, charts).
+- Active/in-progress sessions must not appear in History.
 
 Editing can come later if needed.
 
