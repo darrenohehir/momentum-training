@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModalController, ItemReorderEventDetail } from '@ionic/angular';
+import { ModalController, ItemReorderEventDetail, ViewWillEnter } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import { DbService, LastAttemptResult } from '../../services/db';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
@@ -56,7 +56,7 @@ const UNDO_TIMEOUT_MS = 5000;
   styleUrls: ['./session.page.scss'],
   standalone: false
 })
-export class SessionPage implements OnInit, OnDestroy {
+export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
   /** Current session loaded from DB */
   session: Session | null = null;
 
@@ -123,6 +123,20 @@ export class SessionPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
+    // Session ID extracted in ionViewWillEnter
+  }
+
+  /**
+   * Ionic lifecycle hook: called every time the page becomes active.
+   * Resets state and reloads data to ensure fresh state after edits.
+   */
+  async ionViewWillEnter(): Promise<void> {
+    // Reset finishing state (critical: prevents disabled button bug)
+    this.isFinishing = false;
+
+    // Clear any stale undo state
+    this.clearUndo();
+
     const sessionId = this.route.snapshot.paramMap.get('id');
     if (!sessionId) {
       this.loadError = true;
