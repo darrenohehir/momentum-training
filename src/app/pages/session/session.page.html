@@ -68,11 +68,24 @@
         <ion-card *ngFor="let item of sessionExercises; let exIndex = index" class="exercise-card">
           <!-- Exercise Header -->
           <ion-card-header>
-            <ion-card-subtitle>
-              <span class="exercise-number">{{ exIndex + 1 }}</span>
-              {{ formatCategory(item.exercise.category) }}
-            </ion-card-subtitle>
-            <ion-card-title>{{ item.exercise.name }}</ion-card-title>
+            <div class="exercise-header-row">
+              <div class="exercise-header-info">
+                <ion-card-subtitle>
+                  <span class="exercise-number">{{ exIndex + 1 }}</span>
+                  {{ formatCategory(item.exercise.category) }}
+                </ion-card-subtitle>
+                <ion-card-title>{{ item.exercise.name }}</ion-card-title>
+              </div>
+              <ion-button
+                fill="clear"
+                size="small"
+                color="medium"
+                class="remove-exercise-button"
+                (click)="removeExercise(item)"
+              >
+                <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+              </ion-button>
+            </div>
           </ion-card-header>
 
           <ion-card-content>
@@ -227,4 +240,10 @@
       {{ isFinishing ? 'Finishing...' : 'Finish Session' }}
     </ion-button>
   </ng-container>
+
+  <!-- Undo Toast (minimal, one-line) -->
+  <div class="undo-toast" *ngIf="undoState">
+    <span class="undo-message">Exercise removed.</span>
+    <button class="undo-action" (click)="undoRemoveExercise()">Undo</button>
+  </div>
 </ion-content>

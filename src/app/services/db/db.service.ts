@@ -252,6 +252,32 @@ export class DbService extends Dexie {
     return maxIndex + 1;
   }
 
+  /**
+   * Delete a session exercise and all its associated sets.
+   * Uses a transaction to ensure atomicity.
+   */
+  async deleteSessionExercise(sessionExerciseId: string): Promise<void> {
+    await this.transaction('rw', [this.sessionExercises, this.sets], async () => {
+      // Delete all sets for this session exercise
+      await this.sets.where('sessionExerciseId').equals(sessionExerciseId).delete();
+      // Delete the session exercise itself
+      await this.sessionExercises.delete(sessionExerciseId);
+    });
+  }
+
+  /**
+   * Restore a session exercise and its sets (for undo functionality).
+   * Uses a transaction to ensure atomicity.
+   */
+  async restoreSessionExercise(sessionExercise: SessionExercise, sets: Set[]): Promise<void> {
+    await this.transaction('rw', [this.sessionExercises, this.sets], async () => {
+      await this.sessionExercises.add(sessionExercise);
+      if (sets.length > 0) {
+        await this.sets.bulkAdd(sets);
+      }
+    });
+  }
+
   // ============================================
   // Ghost Mode: Last Attempt queries
   // ============================================

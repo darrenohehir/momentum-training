@@ -220,128 +220,182 @@ Include:
 
 ## Phase 4B – Logging Confidence & Control
 
-**Purpose:**
+**Purpose**
 Harden the core logging loop so that:
 
-- actions feel reversible
-- mistakes feel cheap
+- actions feel reversible _where mistakes are costly_
+- mistakes feel cheap _where they are common_
 - the user never wonders “did that save?” or “can I fix this?”
 
-This is _not_ polish-for-polish’s-sake. It’s structural UX debt paydown.
+This is not polish-for-polish’s-sake.
+This is paying down structural UX debt before adding rewards.
 
 ---
 
-### Task 4B.1 – Reversibility primitives (Undo, not confirmation)
+### Task 4B.1 – Exercise removal + undo (not confirmation)
 
-**Why now:**
-Immediate persistence without undo is fragile UX. You’ve accepted that tradeoff — now you balance it.
+**Why now**
+Removing an exercise from a session is a **high-cost, high-risk action**:
 
-**Scope:**
+- deletes all logged sets
+- cannot be trivially recreated
+- immediate persistence makes mistakes unforgiving without a safety net
 
-- When deleting:
+Undo is required _here_ to maintain trust.
 
-  - a Set
-  - a SessionExercise
+---
 
-- Show a **low-key undo affordance** (toast/snackbar style)
+#### Scope
 
-**Rules:**
+- Add an explicit **Remove exercise** action to a `SessionExercise`
+- On removal:
+
+  - Delete the `SessionExercise` and all associated `Set` records immediately
+  - Show a **low-key undo affordance** (snackbar/toast style)
+
+---
+
+#### Undo behaviour
+
+- Undo is offered **only** for exercise removal (not set deletion)
+- Undo window is short and silent
+- If Undo is tapped:
+
+  - Exercise and all sets are fully restored
+  - Original ordering (`orderIndex`, `setIndex`) is preserved
+
+- If Undo is ignored:
+
+  - Deletion becomes permanent
+  - No follow-up messaging
+
+---
+
+#### Rules
 
 - No modals
 - No “Are you sure?”
-- Undo window is short and silent
-- If user ignores it, action stands
+- No warnings or guilt language
+- Undo is optional, not instructional
 
-This is the keystone that makes _everything else_ feel safe.
+> **Explicit decision:**
+> Set deletion does _not_ have undo in Phase 4B. Sets are cheap to recreate; undo here would add noise without meaningful safety.
 
 ---
 
 ### Task 4B.2 – Exercise ordering control
 
-**Why now:**
-Once Ghost Mode exists, order matters more. Users will change plans mid-session.
-
-**Scope:**
-
-- Reorder `SessionExercise` items
-- Update `orderIndex` immediately
-- Persist instantly
-
-**Guardrail:**
-
-- No “Edit mode”
-- No save state
-- Drag = truth
-
-This removes the feeling of being “locked into” a bad decision.
+**Why now**
+Once Ghost Mode exists, users will adjust plans mid-session.
+Without ordering control, mistakes feel “locked in”.
 
 ---
 
-### Task 4B.3 – Input speed + focus flow
+#### Scope
 
-**Why now:**
-Gamification amplifies behaviour. If behaviour is slow or fiddly, you amplify friction.
+- Allow reordering of `SessionExercise` items
+- Update `orderIndex` immediately
+- Persist instantly to IndexedDB
 
-**Scope (minimum viable):**
+---
 
-- Correct mobile keyboards (`inputmode`)
-- Predictable focus order
-- “Add set” should never feel like a mode switch
+#### Guardrails
 
-**Explicitly NOT:**
+- No edit mode
+- No save state
+- Drag = truth
+- No visual “reorder confirmation”
+
+This ensures flexibility without introducing new modes.
+
+---
+
+### Task 4B.3 – Input speed & focus flow (minimum viable)
+
+**Why now**
+Gamification amplifies existing behaviour.
+If logging is slow or awkward, rewards reinforce frustration.
+
+---
+
+#### Scope
+
+- Correct mobile keyboards (`inputmode="numeric"` / `"decimal"`)
+- Predictable focus order between inputs
+- Adding a set should feel continuous, not like entering a new state
+
+---
+
+#### Explicitly out of scope
 
 - Validation warnings
 - Required fields
 - “Incomplete set” language
+- Auto-corrections that interrupt typing
 
-Empty is allowed. Silence is preferred.
+Empty is valid. Silence is preferred.
 
 ---
 
-### Task 4B.4 – Post-session review surface (non-evaluative)
+### Task 4B.4 – Post-session review surface (descriptive only)
 
-**Why now:**
-Before XP exists, users need a _descriptive_ sense of completion.
+**Why now**
+Before XP exists, users need confidence in _what was logged_, not evaluation of _how well they did_.
 
-**Scope:**
+---
+
+#### Scope
 
 - After finishing a session:
 
-  - show what was logged
-  - allow immediate edits
+  - Show all exercises and sets logged
+  - Allow immediate edits (optional but preferred)
+
+---
+
+#### Guardrails
 
 - No praise
-- No metrics framed as success/failure
+- No success framing
+- No performance interpretation
 
-This is about **correctness**, not reflection yet.
+This screen is about correctness, not reflection or motivation.
 
 ---
 
-### Task 4B.5 – Read-only history access (foundation only)
+### Task 4B.5 – Session history (read-only foundation)
 
-**Why now:**
-Momentum depends on history being _real_ and inspectable.
+**Why now**
+Momentum and future insights rely on history being real, inspectable, and trusted.
 
-**Scope:**
+---
 
-- List of past sessions (date, duration)
+#### Scope
+
+- Simple list of past sessions:
+
+  - Date
+  - Duration (optional)
+
 - Tap → view session
-- Editing optional (read-only is fine for now)
+- Read-only is acceptable for MVP
 
-This grounds future insights and gamification in something tangible.
+Editing can come later if needed.
 
 ---
 
-## Phase 4B Guardrails (important)
+### Phase 4B Guardrails (non-negotiable)
 
 - No rewards yet
-- No scores yet
-- No progress bars yet
-- No “you did X more than last time” yet
-- Everything is **descriptive**, never interpretive
+- No XP yet
+- No levels yet
+- No progress bars
+- No “you did X more than last time”
 
-If Ghost Mode answers _“what happened before?”_,
-Phase 4B answers _“can I rely on this?”_
+Everything remains **descriptive**, never interpretive.
+
+> If Ghost Mode answers _“what happened before?”_
+> Phase 4B answers _“can I rely on this?”_
 
 ---
 
