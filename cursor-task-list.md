@@ -201,29 +201,9 @@ Include:
 
 ---
 
-## Phase 7 – Insights (MVP Only)
+## Phase 7 – Bodyweight Logging
 
-### Task 7.1 – Workouts per week (rolling 4 weeks)
-
-- Compute sessions per week for last 4 weeks.
-- Display simple numeric summary (no heavy charts).
-
-### Task 7.2 – Recent sessions list
-
-- Show last 5 sessions with:
-  - Date
-  - Quest name (if any)
-  - Basic volume summary (optional).
-
-### Task 7.3 – PR highlights log
-
-- Show recent PR events (derived from sessions).
-
----
-
-## Phase 8 – Bodyweight Logging
-
-### Task 8.1 – Bodyweight entry
+### Task 7.1 – Bodyweight entry
 
 - Add bodyweight log screen:
   - Date
@@ -231,10 +211,30 @@ Include:
   - Optional note
 - Persist to IndexedDB.
 
-### Task 8.2 – Bodyweight history view
+### Task 7.2 – Bodyweight history view
 
 - Simple list view (newest first).
 - Graphing is out of scope for MVP.
+
+---
+
+## Phase 8 – Insights (MVP Only)
+
+### Task 8.1 – Workouts per week (rolling 4 weeks)
+
+- Compute sessions per week for last 4 weeks.
+- Display simple numeric summary (no heavy charts).
+
+### Task 8.2 – Recent sessions list
+
+- Show last 5 sessions with:
+  - Date
+  - Quest name (if any)
+  - Basic volume summary (optional).
+
+### Task 8.3 – PR highlights log
+
+- Show recent PR events (derived from sessions).
 
 ---
 
