@@ -1,4 +1,4 @@
-/* History / Insights page styles */
+/* History page styles */
 
 .loading-state {
   display: flex;
@@ -46,24 +46,67 @@
   }
 }
 
-ion-list {
-  background: transparent;
+/* Section titles */
+.section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.6;
+  margin: 0 0 12px 0;
+}
 
-  ion-item {
-    --background: var(--ion-color-step-100);
-    margin-bottom: 8px;
-    border-radius: 8px;
+/* Insights Section */
+.insights-section {
+  margin-bottom: 24px;
+}
 
-    h2 {
-      font-size: 1rem;
-      font-weight: 500;
-      margin: 0;
+.insights-cards {
+  display: flex;
+  gap: 12px;
+
+  .insight-card {
+    flex: 1;
+    margin: 0;
+
+    ion-card-content {
+      padding: 14px 16px;
     }
 
-    p {
-      font-size: 0.85rem;
-      opacity: 0.6;
-      margin: 4px 0 0 0;
+    .insight-label {
+      font-size: 0.75rem;
+      opacity: 0.5;
+      margin-bottom: 4px;
+    }
+
+    .insight-value {
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+  }
+}
+
+/* History Section */
+.history-section {
+  ion-list {
+    background: transparent;
+
+    ion-item {
+      --background: var(--ion-color-step-100);
+      margin-bottom: 8px;
+      border-radius: 8px;
+
+      h2 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin: 0;
+      }
+
+      p {
+        font-size: 0.85rem;
+        opacity: 0.6;
+        margin: 4px 0 0 0;
+      }
     }
   }
 }

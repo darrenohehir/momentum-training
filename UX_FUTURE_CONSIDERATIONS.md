@@ -107,3 +107,18 @@ Any future enhancement should:
 ## Consider folding 'Top Weights' (.highlights-section) into existing 'Exercises' section
 
 - This would call out PRs (Top Weights) in context of the summary list of exercises, rather than as a new section.
+
+---
+
+## PRs (Top Weights) should take reps into consideration
+
+- Right now it's just exercise weight - i.e. if I first do 20KG x 10 reps, and then later do 20kg x 12 reps, this should be considered a PR.
+- In this case the total volume has increased, not the 'weight' though.
+- Not sure how best to refactor this.
+- Not sure if you did 10kg x 25 reps if this would count as a PR? Perhaps it's by weight level, not calculating by 'volume' across all possibilities?
+
+---
+
+## Consider how to handle non-weight exercises like Treadmill.
+
+- Treadmill is more about distance, pace, ramp, etc. It's not the typical 'set' = 'weight' x 'reps'.

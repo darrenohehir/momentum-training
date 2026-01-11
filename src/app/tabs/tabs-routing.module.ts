@@ -16,7 +16,7 @@ const routes: Routes = [
         loadChildren: () => import('../pages/exercises/exercises.module').then(m => m.ExercisesPageModule)
       },
       {
-        path: 'insights',
+        path: 'history',
         loadChildren: () => import('../pages/insights/insights.module').then(m => m.InsightsPageModule)
       },
       {

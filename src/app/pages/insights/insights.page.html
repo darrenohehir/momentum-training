@@ -9,32 +9,59 @@
   <ng-container *ngIf="isLoading">
     <div class="loading-state">
       <ion-spinner name="crescent"></ion-spinner>
-      <p>Loading sessions...</p>
+      <p>Loading...</p>
     </div>
   </ng-container>
 
-  <!-- Sessions List -->
+  <!-- Content -->
   <ng-container *ngIf="!isLoading">
-    <!-- Empty State -->
-    <div *ngIf="sessions.length === 0" class="empty-state">
-      <ion-icon name="calendar-outline"></ion-icon>
-      <h2>No sessions yet</h2>
-      <p>Completed sessions will appear here.</p>
-    </div>
+    <!-- Insights Section (top) -->
+    <section class="insights-section" *ngIf="sessions.length > 0">
+      <h2 class="section-title">Insights</h2>
+      <div class="insights-cards">
+        <!-- Workouts per week card (placeholder for Task 7.3) -->
+        <ion-card class="insight-card">
+          <ion-card-content>
+            <div class="insight-label">Last 4 weeks</div>
+            <div class="insight-value">— sessions</div>
+          </ion-card-content>
+        </ion-card>
 
-    <!-- Session List -->
-    <ion-list *ngIf="sessions.length > 0">
-      <ion-item
-        *ngFor="let session of sessions"
-        button
-        detail="true"
-        (click)="viewSession(session)"
-      >
-        <ion-label>
-          <h2>{{ formatDate(session.endedAt!) }}</h2>
-          <p *ngIf="getDuration(session) as duration">{{ duration }} min</p>
-        </ion-label>
-      </ion-item>
-    </ion-list>
+        <!-- Recent PRs card (placeholder for Task 7.4) -->
+        <ion-card class="insight-card">
+          <ion-card-content>
+            <div class="insight-label">Recent top weights</div>
+            <div class="insight-value">—</div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </section>
+
+    <!-- History Section -->
+    <section class="history-section">
+      <h2 class="section-title" *ngIf="sessions.length > 0">Sessions</h2>
+
+      <!-- Empty State -->
+      <div *ngIf="sessions.length === 0" class="empty-state">
+        <ion-icon name="calendar-outline"></ion-icon>
+        <h2>No sessions yet</h2>
+        <p>Completed sessions will appear here.</p>
+      </div>
+
+      <!-- Session List -->
+      <ion-list *ngIf="sessions.length > 0">
+        <ion-item
+          *ngFor="let session of sessions"
+          button
+          detail="true"
+          (click)="viewSession(session)"
+        >
+          <ion-label>
+            <h2>{{ formatDate(session.endedAt!) }}</h2>
+            <p *ngIf="getDuration(session) as duration">{{ duration }} min</p>
+          </ion-label>
+        </ion-item>
+      </ion-list>
+    </section>
   </ng-container>
 </ion-content>

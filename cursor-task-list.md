@@ -753,26 +753,112 @@ Those can come later if needed.
 
 ---
 
-## Phase 7 – Insights (MVP Only)
+## Phase 7 – Insights + History IA (MVP Only)
 
-### Task 7.1 – Workouts per week (rolling 4 weeks)
+### Context
 
-- Compute sessions per week for last 4 weeks.
-- Display simple numeric summary (no heavy charts).
+Phase 7 introduces lightweight insights while keeping Home calm and utilitarian.
 
-### Task 7.2 – Enhance Recent Sessions (Home)
+Key IA principle:
 
-- Update the Recent Sessions list on Home to show:
-  - Date
-  - Quest name (if any), or "Quick Session" as fallback
-  - Duration
-  - Exercise count (optional)
-- Keep display compact and scannable.
-- No evaluative language (e.g., "good session").
+- **History** = inspectable record of past sessions (primary utility).
+- **Insights** = small, descriptive aggregates derived from history (secondary utility).
 
-### Task 7.3 – PR highlights log
+To avoid overloading Home and to keep navigation semantically correct:
 
-- Show recent PR events (derived from sessions).
+- Insights should live on the same screen as History (top section), not on Home.
+- Home should show only a compact “Recent sessions” preview (max 5) with a link to the full History view.
+
+---
+
+### Task 7.1 – Navigation & IA alignment (History is not “Insights”)
+
+#### Scope
+
+- Update the bottom nav and/or screen structure so “History” is a first-class destination.
+- Recommended approach:
+  - Rename the current `Insights` tab to **History**
+  - Keep the existing History list on that screen
+  - Add an **Insights** section at the top of the History screen (cards)
+
+(Alternative acceptable approach: keep the tab name as Insights but ensure History is reachable via a clear “History” sub-section. Avoid making History feel hidden.)
+
+#### Guardrails
+
+- Do not add new tabs to the footer for MVP.
+- Keep Home lightweight (no insight cards on Home).
+
+---
+
+### Task 7.2 – Home: Recent sessions preview (max 5)
+
+#### Scope
+
+- Home shows a compact “Recent sessions” preview:
+  - Show last 5 **completed** sessions only (`endedAt` exists)
+  - Each item shows:
+    - Date (scannable format)
+    - Quest name if present, otherwise a neutral fallback (e.g. “Session” or “Untitled session”)
+    - Duration (optional)
+- Add a “See all” action that navigates to the full History screen.
+- Tapping a session navigates to the existing read-only session detail view.
+
+#### Guardrails
+
+- No evaluative language (“good session” etc.)
+- No additional insight widgets on Home
+
+---
+
+### Task 7.3 – Insights card: Workouts per week (rolling 4 weeks)
+
+#### Scope
+
+- Display on the History screen in an “Insights” section (top).
+- Compute sessions per week over the last 4 weeks:
+  - Completed sessions only (`endedAt` exists)
+  - Use local calendar day boundaries
+  - Define week start as Monday (AU-friendly)
+- Display as simple numbers (no heavy charts):
+  - e.g. “Last 4 weeks: 9 sessions”
+  - Optional: per-week breakdown as small text
+
+#### Guardrails
+
+- Descriptive only (no judgement, no goals)
+- Avoid pressure copy
+
+---
+
+### Task 7.4 – Insights card: Recent PRs (PR highlights log)
+
+#### Scope
+
+- Display on the History screen in the “Insights” section.
+- Show recent PR events from **stored PR events** (do not recompute PR logic on load).
+- List last N PR events (e.g. 10):
+  - Exercise name
+  - New top weight
+  - Session date
+
+#### Guardrails
+
+- Factual language only
+- No celebration / confetti / “You’re improving” copy
+
+---
+
+### Task 7.5 – Performance constraints (important)
+
+#### Scope
+
+- Do not scan the entire DB on every render.
+- Use bounded queries:
+  - sessions within last 28 days (for weekly counts)
+  - last 5 completed sessions (Home)
+  - last N PR events (PR log)
+
+Keep History and Home fast on mobile.
 
 ---
 
