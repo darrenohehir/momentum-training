@@ -64,6 +64,20 @@
       </ion-card-content>
     </ion-card>
 
+    <!-- Highlights (PRs) - Only shown if PRs exist -->
+    <div class="highlights-section" *ngIf="prs.length > 0">
+      <h2>Top Weights</h2>
+      <ion-list class="highlights-list">
+        <ion-item *ngFor="let pr of prs" lines="none">
+          <ion-label>
+            <h3>{{ pr.exerciseName }}</h3>
+            <p class="pr-detail">{{ pr.previousMax }} kg → {{ pr.newMax }} kg</p>
+          </ion-label>
+          <ion-note slot="end" class="pr-badge">new</ion-note>
+        </ion-item>
+      </ion-list>
+    </div>
+
     <!-- Exercises Summary -->
     <div class="exercises-summary" *ngIf="exercises.length > 0">
       <h2>Exercises</h2>

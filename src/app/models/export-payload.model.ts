@@ -4,11 +4,12 @@ import { SessionExercise } from './session-exercise.model';
 import { Set } from './set.model';
 import { BodyweightEntry } from './bodyweight-entry.model';
 import { GamificationState } from './gamification-state.model';
+import { PREvent } from './pr-event.model';
 
 /**
  * Current schema version for export/import compatibility.
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 /**
  * Complete data export payload for backup/restore.
@@ -30,5 +31,7 @@ export interface ExportPayload {
   bodyweightEntries: BodyweightEntry[];
   /** Gamification state */
   gamificationState: GamificationState;
+  /** PR events (added in schema v2) */
+  prEvents: PREvent[];
 }
 

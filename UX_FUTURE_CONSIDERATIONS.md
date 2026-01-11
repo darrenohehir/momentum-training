@@ -101,3 +101,9 @@ Any future enhancement should:
 - Reduce cognitive load
 - Never imply obligation or failure
 - Be removable without breaking core flows
+
+---
+
+## Consider folding 'Top Weights' (.highlights-section) into existing 'Exercises' section
+
+- This would call out PRs (Top Weights) in context of the summary list of exercises, rather than as a new section.

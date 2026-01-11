@@ -35,6 +35,7 @@ No authentication, no cloud sync, no social features.
 - Session history (read-only)
 - **Momentum system** – Active/Paused status based on 7-day window
 - **XP engine** – +100 XP per session, +5 XP per set (awarded once per session)
+- **PR detection** – Top weight PRs detected and displayed on session summary (+50 XP per PR, max 3)
 
 ## Local Development
 

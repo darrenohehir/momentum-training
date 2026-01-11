@@ -7,4 +7,5 @@ export * from './set.model';
 export * from './bodyweight-entry.model';
 export * from './gamification-state.model';
 export * from './export-payload.model';
+export * from './pr-event.model';
 

@@ -621,18 +621,135 @@ Gamification should support the habit of training — not become the reason for 
 
 ## Phase 6 – PR Detection & Highlights
 
-### Task 6.1 – PR detection logic
+### Implementation Context & Guardrails (Important)
 
-- For each exercise in completed session:
-  - Compare max weight vs historical max weight.
-- Detect “Top Weight PR”.
+**Intent**
 
-### Task 6.2 – Session Highlights
+PRs (Personal Records) exist to acknowledge _meaningful improvement over time_, not novelty or first use.
+They should feel rare, factual, and earned — not automatic or celebratory.
 
-- At Session Summary:
-  - List PRs detected
-  - Award +50 XP per PR (cap at 3 per session)
-- Update totalXp accordingly.
+Phase 6 should reinforce real progression without distorting XP, encouraging exercise hopping, or undermining trust in logged data.
+
+---
+
+### PR definition (critical)
+
+A **PR** is detected **only when a user exceeds their own previous best** for an exercise.
+
+In concrete terms:
+
+- For a given exercise:
+
+  1. Find the **highest weight previously recorded**
+
+     - From completed sessions only (`endedAt` exists)
+     - Exclude the current session
+
+  2. Find the **highest weight in the current session**
+  3. A PR exists **only if**:
+
+     - A previous max exists, **and**
+     - `currentMax > previousMax` (strictly greater)
+
+---
+
+### First attempts (baseline, not PRs)
+
+- The **first time a user logs an exercise**, there is no previous best.
+- This first recorded max establishes a **baseline**, not a PR.
+- First attempts must:
+
+  - NOT generate a PR event
+  - NOT award PR XP
+  - NOT be shown as a “PR” in the UI
+
+This avoids “PR spam” where every new exercise appears as a PR and keeps PRs meaningful.
+
+---
+
+### Data filtering rules
+
+- Ignore sets where:
+
+  - `weight` is `null`
+  - `weight` is `0` or less
+
+- Do not round or normalise values during detection.
+- Use stored numeric values as-is.
+- Treat weight consistently (e.g. kg only for MVP).
+
+---
+
+### Historical comparison rules
+
+- Historical max queries must:
+
+  - Join `SessionExercise → Session`
+  - Include only sessions with `endedAt`
+  - Exclude the current session
+
+- Ghost Mode and PR detection must follow the same “completed sessions only” rule.
+
+---
+
+### XP & idempotency (non-negotiable)
+
+PR detection and XP awards must be **idempotent**.
+
+That means:
+
+- PRs and PR XP are awarded **once per session**, at first completion.
+- Editing a completed session later must **not**:
+
+  - Re-trigger PR detection
+  - Re-award PR XP
+  - Duplicate PR events
+
+Recommended approach:
+
+- Record awards per session (e.g. `sessionAwards` or similar)
+- If awards already exist for a session, skip detection and XP logic
+
+This keeps rewards stable and prevents XP inflation or trust-breaking behaviour.
+
+---
+
+### Session Highlights UI constraints
+
+- PRs should be shown factually, not celebratorily.
+- Avoid language like:
+
+  - “New PR!”
+  - “Amazing!”
+  - “You crushed it”
+
+- Prefer neutral copy such as:
+
+  - “Top weight (new)”
+  - “Previous best: 100kg”
+
+PRs should feel like **records**, not achievements.
+
+---
+
+### Scope discipline
+
+Phase 6 is intentionally narrow:
+
+- Only **Top Weight PRs**
+- No volume PRs
+- No rep PRs
+- No comparisons between users
+- No charts or trend analysis
+
+Those can come later if needed.
+
+---
+
+### Summary principle
+
+> A PR means _you beat your own previous best_.
+> If nothing was beaten, nothing should be celebrated.
 
 ---
 

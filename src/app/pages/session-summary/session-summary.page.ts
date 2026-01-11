@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ViewWillEnter, NavController } from '@ionic/angular';
-import { Session, SessionExercise, Exercise, QuestId } from '../../models';
+import { Session, SessionExercise, Exercise, QuestId, PREvent } from '../../models';
 import { DbService } from '../../services/db';
 
 /** Map quest IDs to display labels */
@@ -21,6 +21,15 @@ interface ExerciseSummary {
   setCount: number;
 }
 
+/**
+ * View model for PR display with exercise name.
+ */
+interface PRSummary {
+  exerciseName: string;
+  previousMax: number;
+  newMax: number;
+}
+
 @Component({
   selector: 'app-session-summary',
   templateUrl: './session-summary.page.html',
@@ -33,6 +42,9 @@ export class SessionSummaryPage implements OnInit, ViewWillEnter {
 
   /** Exercise summaries with set counts */
   exercises: ExerciseSummary[] = [];
+
+  /** PRs detected for this session */
+  prs: PRSummary[] = [];
 
   /** Loading state */
   isLoading = true;
@@ -69,7 +81,7 @@ export class SessionSummaryPage implements OnInit, ViewWillEnter {
   }
 
   /**
-   * Load session and exercise data.
+   * Load session, exercise, and PR data.
    */
   private async loadSessionSummary(sessionId: string): Promise<void> {
     this.isLoading = true;
@@ -84,10 +96,6 @@ export class SessionSummaryPage implements OnInit, ViewWillEnter {
 
       // Load session exercises
       const sessionExercises = await this.db.getSessionExercises(sessionId);
-      if (sessionExercises.length === 0) {
-        this.exercises = [];
-        return;
-      }
 
       // Load exercise details
       const exerciseIds = sessionExercises.map(se => se.exerciseId);
@@ -106,8 +114,27 @@ export class SessionSummaryPage implements OnInit, ViewWillEnter {
           setCount: sets.length
         });
       }
-
       this.exercises = summaries;
+
+      // Load PRs for this session
+      const prEvents = await this.db.getPREventsForSession(sessionId);
+      if (prEvents.length > 0) {
+        // Get exercise names for PRs
+        const prExerciseIds = prEvents.map(pr => pr.exerciseId);
+        const prExerciseMap = await this.db.getExercisesByIds(prExerciseIds);
+
+        this.prs = prEvents.map(pr => {
+          const exercise = prExerciseMap.get(pr.exerciseId);
+          return {
+            exerciseName: exercise?.name || 'Unknown Exercise',
+            previousMax: pr.previousMax,
+            newMax: pr.newMax
+          };
+        });
+      } else {
+        this.prs = [];
+      }
+
     } catch (error) {
       console.error('Failed to load session summary:', error);
       this.loadError = true;
@@ -189,4 +216,3 @@ export class SessionSummaryPage implements OnInit, ViewWillEnter {
     return category.charAt(0).toUpperCase() + category.slice(1);
   }
 }
-

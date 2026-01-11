@@ -7,6 +7,7 @@ import {
   Set,
   BodyweightEntry,
   GamificationState,
+  PREvent,
   SCHEMA_VERSION
 } from '../../models';
 
@@ -86,6 +87,12 @@ export class DbService extends Dexie {
    */
   gamificationState!: Table<GamificationState & { id: string }, string>;
 
+  /**
+   * PR events table.
+   * Indexes: id (primary), sessionId (get PRs for session), exerciseId (PR history per exercise)
+   */
+  prEvents!: Table<PREvent, string>;
+
   constructor() {
     super(DB_NAME);
     this.defineSchema();
@@ -107,8 +114,16 @@ export class DbService extends Dexie {
       gamificationState: 'id'
     });
 
-    // Future versions would be added here with upgrade functions:
-    // this.version(2).stores({...}).upgrade(tx => {...});
+    // Version 2: Add prEvents table for PR detection
+    this.version(2).stores({
+      exercises: 'id, category, name',
+      sessions: 'id, startedAt, endedAt',
+      sessionExercises: 'id, sessionId, exerciseId, [sessionId+orderIndex]',
+      sets: 'id, sessionExerciseId, [sessionExerciseId+setIndex]',
+      bodyweightEntries: 'id, date',
+      gamificationState: 'id',
+      prEvents: 'id, sessionId, exerciseId'
+    });
   }
 
   /**
@@ -530,5 +545,132 @@ export class DbService extends Dexie {
     }
 
     return totalSets;
+  }
+
+  // ============================================
+  // PR Event queries
+  // ============================================
+
+  /**
+   * Get PR events for a specific session.
+   * @param sessionId - The session to get PRs for
+   */
+  async getPREventsForSession(sessionId: string): Promise<PREvent[]> {
+    return this.prEvents.where('sessionId').equals(sessionId).toArray();
+  }
+
+  /**
+   * Add multiple PR events in a single transaction.
+   * Used when detecting PRs at session completion.
+   * @param events - Array of PREvent records to add
+   */
+  async addPREvents(events: PREvent[]): Promise<void> {
+    if (events.length === 0) return;
+
+    await this.transaction('rw', this.prEvents, async () => {
+      await this.prEvents.bulkAdd(events);
+    });
+  }
+
+  /**
+   * Get all sets for an exercise from completed sessions, excluding a specific session.
+   * Used for calculating historical max weight for PR detection.
+   *
+   * Filtering rules:
+   * - Only from completed sessions (endedAt exists)
+   * - Excludes the specified session
+   * - Returns sets with valid weights (weight > 0)
+   *
+   * @param exerciseId - The exercise to get historical sets for
+   * @param excludeSessionId - Session to exclude (usually the current session)
+   */
+  async getHistoricalSetsForExercise(
+    exerciseId: string,
+    excludeSessionId: string
+  ): Promise<Set[]> {
+    // Step 1: Find all SessionExercises for this exercise
+    const sessionExercises = await this.sessionExercises
+      .where('exerciseId')
+      .equals(exerciseId)
+      .toArray();
+
+    if (sessionExercises.length === 0) {
+      return [];
+    }
+
+    // Step 2: Get unique session IDs (excluding current session)
+    const sessionIds = [
+      ...new Set(
+        sessionExercises
+          .map(se => se.sessionId)
+          .filter(id => id !== excludeSessionId)
+      )
+    ];
+
+    if (sessionIds.length === 0) {
+      return [];
+    }
+
+    // Step 3: Fetch those sessions and filter to completed only
+    const sessions = await this.sessions
+      .where('id')
+      .anyOf(sessionIds)
+      .toArray();
+
+    const completedSessionIds = new Set(
+      sessions
+        .filter(s => s.endedAt !== undefined)
+        .map(s => s.id)
+    );
+
+    if (completedSessionIds.size === 0) {
+      return [];
+    }
+
+    // Step 4: Get SessionExercises from completed sessions only
+    const validSessionExercises = sessionExercises.filter(
+      se => completedSessionIds.has(se.sessionId)
+    );
+
+    // Step 5: Fetch all sets for those SessionExercises
+    const allSets: Set[] = [];
+    for (const se of validSessionExercises) {
+      const sets = await this.getSetsForSessionExercise(se.id);
+      // Filter to sets with valid weights (not null/undefined and > 0)
+      const validSets = sets.filter(s => s.weight !== undefined && s.weight !== null && s.weight > 0);
+      allSets.push(...validSets);
+    }
+
+    return allSets;
+  }
+
+  /**
+   * Get all sets for an exercise in a specific session.
+   * Used for calculating current max weight for PR detection.
+   *
+   * @param exerciseId - The exercise to get sets for
+   * @param sessionId - The session to get sets from
+   */
+  async getSetsForExerciseInSession(
+    exerciseId: string,
+    sessionId: string
+  ): Promise<Set[]> {
+    // Find the SessionExercise for this exercise in this session
+    const sessionExercises = await this.sessionExercises
+      .where('sessionId')
+      .equals(sessionId)
+      .toArray();
+
+    const matchingSE = sessionExercises.find(se => se.exerciseId === exerciseId);
+
+    if (!matchingSE) {
+      return [];
+    }
+
+    // Get all sets for this SessionExercise
+    const sets = await this.getSetsForSessionExercise(matchingSE.id);
+
+    // Filter to sets with valid weights (not null/undefined and > 0)
+    return sets.filter(s => s.weight !== undefined && s.weight !== null && s.weight > 0);
   }
 }
