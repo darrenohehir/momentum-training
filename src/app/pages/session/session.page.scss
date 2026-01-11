@@ -60,9 +60,45 @@
   }
 }
 
-/* Exercise cards with sets */
+/* Exercise cards with sets (reorderable) */
 .exercise-cards {
   margin-bottom: 16px;
+}
+
+.exercise-item {
+  --padding-start: 0;
+  --padding-end: 0;
+  --inner-padding-start: 0;
+  --inner-padding-end: 0;
+  --background: transparent;
+  --min-height: auto;
+  align-items: stretch;
+
+  ion-reorder {
+    margin-right: 8px;
+    margin-left: 0;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 20px;
+    color: var(--ion-color-step-400);
+    cursor: grab;
+
+    &:active {
+      cursor: grabbing;
+    }
+  }
+
+  .exercise-card {
+    flex: 1;
+    margin: 0;
+  }
+}
+
+ion-reorder-group {
+  // Ensure cards maintain their styling during drag
+  .item-reorder-selected .exercise-card {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .exercise-card {

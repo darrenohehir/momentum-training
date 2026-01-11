@@ -63,30 +63,37 @@
         </ion-card>
       </div>
 
-      <!-- Exercise Cards with Sets -->
-      <div *ngIf="!isLoadingExercises && sessionExercises.length > 0" class="exercise-cards">
-        <ion-card *ngFor="let item of sessionExercises; let exIndex = index" class="exercise-card">
-          <!-- Exercise Header -->
-          <ion-card-header>
-            <div class="exercise-header-row">
-              <div class="exercise-header-info">
-                <ion-card-subtitle>
-                  <span class="exercise-number">{{ exIndex + 1 }}</span>
-                  {{ formatCategory(item.exercise.category) }}
-                </ion-card-subtitle>
-                <ion-card-title>{{ item.exercise.name }}</ion-card-title>
+      <!-- Exercise Cards with Sets (Reorderable) -->
+      <ion-reorder-group
+        *ngIf="!isLoadingExercises && sessionExercises.length > 0"
+        [disabled]="false"
+        (ionItemReorder)="handleExerciseReorder($event)"
+        class="exercise-cards"
+      >
+        <ion-item *ngFor="let item of sessionExercises; let exIndex = index" lines="none" class="exercise-item">
+          <ion-reorder slot="start"></ion-reorder>
+          <ion-card class="exercise-card">
+            <!-- Exercise Header -->
+            <ion-card-header>
+              <div class="exercise-header-row">
+                <div class="exercise-header-info">
+                  <ion-card-subtitle>
+                    <span class="exercise-number">{{ exIndex + 1 }}</span>
+                    {{ formatCategory(item.exercise.category) }}
+                  </ion-card-subtitle>
+                  <ion-card-title>{{ item.exercise.name }}</ion-card-title>
+                </div>
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  color="medium"
+                  class="remove-exercise-button"
+                  (click)="removeExercise(item)"
+                >
+                  <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+                </ion-button>
               </div>
-              <ion-button
-                fill="clear"
-                size="small"
-                color="medium"
-                class="remove-exercise-button"
-                (click)="removeExercise(item)"
-              >
-                <ion-icon slot="icon-only" name="close-outline"></ion-icon>
-              </ion-button>
-            </div>
-          </ion-card-header>
+            </ion-card-header>
 
           <ion-card-content>
             <!-- Ghost Mode: Previous attempt (if exists) -->
@@ -208,8 +215,9 @@
               Add Set
             </ion-button>
           </ion-card-content>
-        </ion-card>
-      </div>
+          </ion-card>
+        </ion-item>
+      </ion-reorder-group>
 
       <!-- Empty State -->
       <div *ngIf="!isLoadingExercises && sessionExercises.length === 0" class="exercises-empty">

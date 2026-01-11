@@ -31,6 +31,7 @@ No authentication, no cloud sync, no social features.
 - Finish session + summary
 - Ghost Mode: previous attempt display + copy sets
 - Exercise removal with undo
+- Exercise reordering (drag-and-drop)
 
 ## Local Development
 

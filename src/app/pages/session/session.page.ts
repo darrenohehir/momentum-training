@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModalController } from '@ionic/angular';
+import { ModalController, ItemReorderEventDetail } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import { DbService, LastAttemptResult } from '../../services/db';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
@@ -411,6 +411,48 @@ export class SessionPage implements OnInit, OnDestroy {
       this.undoTimer = null;
     }
     this.undoState = null;
+  }
+
+  // ============================================
+  // Exercise reordering
+  // ============================================
+
+  /**
+   * Handle exercise reorder event from ion-reorder-group.
+   * Updates local array and persists new orderIndex values to IndexedDB.
+   * Drag = truth; no confirmation, no undo.
+   */
+  async handleExerciseReorder(event: CustomEvent<ItemReorderEventDetail>): Promise<void> {
+    const { from, to } = event.detail;
+
+    // Complete the reorder in the DOM (required by Ionic)
+    event.detail.complete();
+
+    // Guard: no actual change
+    if (from === to) return;
+
+    // Reorder local array
+    const [movedItem] = this.sessionExercises.splice(from, 1);
+    this.sessionExercises.splice(to, 0, movedItem);
+
+    // Update orderIndex for all items and persist
+    const updates = this.sessionExercises.map((item, index) => ({
+      id: item.sessionExercise.id,
+      orderIndex: index
+    }));
+
+    // Update local state immediately
+    this.sessionExercises.forEach((item, index) => {
+      item.sessionExercise.orderIndex = index;
+    });
+
+    // Persist to IndexedDB (non-blocking, no UI feedback)
+    try {
+      await this.db.updateSessionExerciseOrder(updates);
+    } catch (error) {
+      console.error('Failed to persist exercise order:', error);
+      // Note: local state already updated; reload would fix any inconsistency
+    }
   }
 
   // ============================================

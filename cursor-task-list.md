@@ -293,15 +293,28 @@ Without ordering control, mistakes feel “locked in”.
 
 #### Scope
 
-- Allow reordering of `SessionExercise` items
-- Update `orderIndex` immediately
-- Persist instantly to IndexedDB
+- Allow reordering of `SessionExercise` items.
+  - Reordering applies only to the current session’s `SessionExercise` list.
+  - Ghost / previous session data is read-only and must not be affected.
+- Update and persist `orderIndex` as soon as the drag interaction completes.
+- Reordering does not require undo support in Phase 4B.
+
+---
+
+**Implementation notes (important)**
+
+- Empty, partially filled, or temporarily invalid inputs are valid states and must not trigger errors, warnings, or visual feedback.
+- Focus flow should be predictable and linear; do not implement “smart” or conditional focus skipping.
+- Set creation must remain an explicit user action and must not depend on input completion or validation.
+- This task is mobile-first; optimise for one-handed phone use over desktop behaviour.
 
 ---
 
 #### Guardrails
 
 - No edit mode
+  - Reordering is always available during an active session.
+  - There is no separate “reorder” or “edit” mode.
 - No save state
 - Drag = truth
 - No visual “reorder confirmation”
@@ -323,6 +336,16 @@ If logging is slow or awkward, rewards reinforce frustration.
 - Correct mobile keyboards (`inputmode="numeric"` / `"decimal"`)
 - Predictable focus order between inputs
 - Adding a set should feel continuous, not like entering a new state
+
+---
+
+#### Implementation notes (important)
+
+- Focus must not automatically change in response to value entry, validation, or blur events.
+  - Focus changes should occur only as a result of explicit user actions (e.g. tapping another field or adding a set).
+- Behaviour in this task applies only to active session logging views.
+  - Read-only views (history, ghost mode) must not be affected.
+- Input handling should not introduce auto-formatting, rounding, or value normalisation while typing.
 
 ---
 

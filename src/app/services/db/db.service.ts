@@ -278,6 +278,21 @@ export class DbService extends Dexie {
     });
   }
 
+  /**
+   * Update orderIndex for multiple session exercises.
+   * Used for reordering exercises within a session.
+   * @param updates - Array of { id, orderIndex } to update
+   */
+  async updateSessionExerciseOrder(updates: Array<{ id: string; orderIndex: number }>): Promise<void> {
+    if (updates.length === 0) return;
+
+    await this.transaction('rw', this.sessionExercises, async () => {
+      for (const update of updates) {
+        await this.sessionExercises.update(update.id, { orderIndex: update.orderIndex });
+      }
+    });
+  }
+
   // ============================================
   // Ghost Mode: Last Attempt queries
   // ============================================
