@@ -25,5 +25,7 @@ export interface Session {
   createdAt: string;
   /** ISO 8601 timestamp */
   updatedAt: string;
+  /** True if XP has been awarded for this session (prevents double-awarding) */
+  xpAwarded?: boolean;
 }
 

@@ -71,6 +71,39 @@
   text-align: center;
 }
 
+/* XP / Level Card */
+.xp-card {
+  ion-card-content {
+    padding: 16px;
+  }
+}
+
+.xp-level-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.5;
+}
+
 /* Section Header */
 .section-header {
   margin: 24px 0 12px 0;

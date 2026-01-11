@@ -475,4 +475,60 @@ export class DbService extends Dexie {
       await this.sets.bulkAdd(sets);
     });
   }
+
+  // ============================================
+  // Gamification queries
+  // ============================================
+
+  /**
+   * Get the current gamification state.
+   * Returns null if no state exists (should be seeded on first run).
+   */
+  async getGamificationState(): Promise<(GamificationState & { id: string }) | undefined> {
+    // Use the fixed ID from seed-data for the single record pattern
+    return this.gamificationState.get('default');
+  }
+
+  /**
+   * Update the gamification state.
+   * Creates the record if it doesn't exist.
+   */
+  async updateGamificationState(state: GamificationState & { id: string }): Promise<void> {
+    await this.gamificationState.put(state);
+  }
+
+  /**
+   * Add XP to the gamification state.
+   * Creates the state record if it doesn't exist.
+   * @param amount - Amount of XP to add
+   * @returns The new total XP
+   */
+  async addXp(amount: number): Promise<number> {
+    const currentState = await this.getGamificationState();
+    const newTotalXp = (currentState?.totalXp ?? 0) + amount;
+
+    await this.gamificationState.put({
+      id: 'default',
+      totalXp: newTotalXp
+    });
+
+    return newTotalXp;
+  }
+
+  /**
+   * Count the total number of sets for a session.
+   * Used for XP calculation.
+   * @param sessionId - The session to count sets for
+   */
+  async countSetsForSession(sessionId: string): Promise<number> {
+    const sessionExercises = await this.getSessionExercises(sessionId);
+    let totalSets = 0;
+
+    for (const se of sessionExercises) {
+      const sets = await this.getSetsForSessionExercise(se.id);
+      totalSets += sets.length;
+    }
+
+    return totalSets;
+  }
 }

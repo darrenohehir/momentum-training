@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { Subscription } from 'rxjs';
-import { Session } from '../../models';
+import { Session, computeLevel } from '../../models';
 import { DbService } from '../../services/db';
 import { MomentumService, MomentumStatus } from '../../services/momentum';
 import { AppEventsService } from '../../services/events';
@@ -22,6 +22,12 @@ export class HomePage implements OnInit, OnDestroy, ViewWillEnter {
 
   /** Recent completed sessions */
   recentSessions: Session[] = [];
+
+  /** Total XP accumulated */
+  totalXp = 0;
+
+  /** Current level (derived from XP) */
+  level = 1;
 
   /** Loading state */
   isLoading = true;
@@ -59,7 +65,7 @@ export class HomePage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   /**
-   * Load momentum status and recent sessions.
+   * Load momentum status, recent sessions, and gamification state.
    */
   private async loadData(): Promise<void> {
     this.isLoading = true;
@@ -72,10 +78,17 @@ export class HomePage implements OnInit, OnDestroy, ViewWillEnter {
 
       // Get recent sessions (already sorted newest first)
       this.recentSessions = completedSessions.slice(0, MAX_RECENT_SESSIONS);
+
+      // Load gamification state
+      const gamificationState = await this.db.getGamificationState();
+      this.totalXp = gamificationState?.totalXp ?? 0;
+      this.level = computeLevel(this.totalXp);
     } catch (error) {
       console.error('Failed to load home data:', error);
       this.momentum = null;
       this.recentSessions = [];
+      this.totalXp = 0;
+      this.level = 1;
     } finally {
       this.isLoading = false;
     }

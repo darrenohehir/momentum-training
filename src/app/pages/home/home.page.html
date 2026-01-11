@@ -57,6 +57,24 @@
     </ion-card>
   </ng-container>
 
+  <!-- XP / Level -->
+  <ng-container *ngIf="!isLoading">
+    <ion-card class="status-card xp-card">
+      <ion-card-content>
+        <div class="xp-level-row">
+          <div class="stat">
+            <span class="stat-value">{{ totalXp }}</span>
+            <span class="stat-label">XP</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ level }}</span>
+            <span class="stat-label">Level</span>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
   <!-- Recent Sessions -->
   <div class="section-header">
     <h2>Recent Sessions</h2>

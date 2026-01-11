@@ -4,6 +4,7 @@ import { ModalController, ItemReorderEventDetail, ViewWillEnter } from '@ionic/a
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import { DbService, LastAttemptResult } from '../../services/db';
 import { AppEventsService } from '../../services/events';
+import { XpService } from '../../services/xp';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
@@ -103,7 +104,8 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     private router: Router,
     private db: DbService,
     private modalController: ModalController,
-    private appEvents: AppEventsService
+    private appEvents: AppEventsService,
+    private xpService: XpService
   ) {
     // Set up debounced auto-save for set updates
     this.setUpdateSubject.pipe(
@@ -331,7 +333,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
 
   /**
    * Finish the current session.
-   * Updates endedAt and updatedAt, then navigates to summary.
+   * Updates endedAt and updatedAt, awards XP, then navigates to summary.
    */
   async finishSession(): Promise<void> {
     if (!this.session || this.isFinishing) return;
@@ -343,6 +345,9 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
       this.session.updatedAt = now;
 
       await this.db.updateSession(this.session);
+
+      // Award XP for completing the session (only awards if not already awarded)
+      await this.xpService.awardSessionXp(this.session.id);
 
       // Notify other components that session data has changed
       this.appEvents.emitSessionDataChanged();

@@ -34,6 +34,7 @@ No authentication, no cloud sync, no social features.
 - Exercise reordering (drag-and-drop)
 - Session history (read-only)
 - **Momentum system** – Active/Paused status based on 7-day window
+- **XP engine** – +100 XP per session, +5 XP per set (awarded once per session)
 
 ## Local Development
 
