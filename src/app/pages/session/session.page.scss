@@ -92,6 +92,48 @@
   }
 }
 
+/* Ghost Mode: Previous attempt section */
+.ghost-section {
+  background: var(--ion-color-step-100);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-left: 2px solid var(--ion-color-step-300);
+}
+
+.ghost-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.ghost-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--ion-color-step-600);
+}
+
+.ghost-date {
+  font-size: 0.75rem;
+  color: var(--ion-color-step-500);
+}
+
+.ghost-sets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ghost-set {
+  font-size: 0.8rem;
+  color: var(--ion-color-step-550);
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: nowrap;
+}
+
 /* RPE Toggle */
 .rpe-toggle {
   display: flex;

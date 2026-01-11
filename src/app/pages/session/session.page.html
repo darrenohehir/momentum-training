@@ -76,6 +76,21 @@
           </ion-card-header>
 
           <ion-card-content>
+            <!-- Ghost Mode: Previous attempt (if exists) -->
+            <ng-container *ngIf="getGhost(item.exercise.id) as ghost">
+              <div class="ghost-section" *ngIf="ghost.sets.length > 0">
+                <div class="ghost-header">
+                  <span class="ghost-label">Previous</span>
+                  <span class="ghost-date">{{ formatGhostDate(ghost.session.endedAt!) }}</span>
+                </div>
+                <div class="ghost-sets">
+                  <span class="ghost-set" *ngFor="let set of ghost.sets">
+                    {{ formatGhostSet(set) }}
+                  </span>
+                </div>
+              </div>
+            </ng-container>
+
             <!-- RPE Toggle -->
             <div class="rpe-toggle">
               <ion-button

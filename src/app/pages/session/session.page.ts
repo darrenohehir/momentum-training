@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
-import { DbService } from '../../services/db';
+import { DbService, LastAttemptResult } from '../../services/db';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
@@ -60,6 +60,13 @@ export class SessionPage implements OnInit, OnDestroy {
 
   /** Finishing session in progress */
   isFinishing = false;
+
+  /**
+   * Ghost Mode: cached last attempt data per exercise.
+   * Keyed by exerciseId for lookup when rendering.
+   * null = no previous attempt exists (normal state).
+   */
+  ghostByExerciseId: Record<string, LastAttemptResult | null> = {};
 
   /** Subject for debounced set updates */
   private setUpdateSubject = new Subject<PendingSetUpdate>();
@@ -158,8 +165,11 @@ export class SessionPage implements OnInit, OnDestroy {
         })
         .filter((item): item is SessionExerciseView => item !== null);
 
-      // Load sets for all exercises
-      await this.loadAllSets();
+      // Load sets and ghost data for all exercises in parallel
+      await Promise.all([
+        this.loadAllSets(),
+        this.loadAllGhostData()
+      ]);
     } catch (error) {
       console.error('Failed to load session exercises:', error);
     } finally {
@@ -174,6 +184,38 @@ export class SessionPage implements OnInit, OnDestroy {
     await Promise.all(
       this.sessionExercises.map(item => this.loadSetsForExercise(item))
     );
+  }
+
+  /**
+   * Load ghost (last attempt) data for all session exercises.
+   * Fetches in parallel for performance.
+   */
+  private async loadAllGhostData(): Promise<void> {
+    if (!this.session) return;
+
+    await Promise.all(
+      this.sessionExercises.map(item => this.loadGhostForExercise(item.exercise.id))
+    );
+  }
+
+  /**
+   * Load ghost (last attempt) data for a single exercise.
+   * Caches result in ghostByExerciseId. No UI noise on error.
+   */
+  private async loadGhostForExercise(exerciseId: string): Promise<void> {
+    if (!this.session) return;
+
+    // Skip if already loaded (avoid redundant calls)
+    if (exerciseId in this.ghostByExerciseId) return;
+
+    try {
+      const result = await this.db.getLastAttempt(exerciseId, this.session.id);
+      this.ghostByExerciseId[exerciseId] = result;
+    } catch (error) {
+      console.error(`Failed to load ghost data for exercise ${exerciseId}:`, error);
+      // Mark as checked to avoid retrying
+      this.ghostByExerciseId[exerciseId] = null;
+    }
   }
 
   /**
@@ -235,6 +277,9 @@ export class SessionPage implements OnInit, OnDestroy {
         showRpe: false,
         isLoadingSets: false
       });
+
+      // Load ghost data for the newly added exercise (non-blocking)
+      this.loadGhostForExercise(exercise.id);
     } catch (error) {
       console.error('Failed to add exercise to session:', error);
     }
@@ -435,5 +480,36 @@ export class SessionPage implements OnInit, OnDestroy {
    */
   formatCategory(category: string): string {
     return category.charAt(0).toUpperCase() + category.slice(1);
+  }
+
+  // ============================================
+  // Ghost Mode helpers
+  // ============================================
+
+  /**
+   * Get ghost data for an exercise (if available).
+   * Returns null if no previous attempt exists.
+   */
+  getGhost(exerciseId: string): LastAttemptResult | null {
+    return this.ghostByExerciseId[exerciseId] ?? null;
+  }
+
+  /**
+   * Format ghost session date for display.
+   * Returns compact format like "Jan 3" or "Dec 15".
+   */
+  formatGhostDate(isoString: string): string {
+    const date = new Date(isoString);
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
+
+  /**
+   * Format a ghost set for display.
+   * Returns "{weight} kg × {reps}" with graceful handling of missing values.
+   */
+  formatGhostSet(set: Set): string {
+    const weightStr = set.weight !== undefined ? `${set.weight} kg` : '—';
+    const repsStr = set.reps !== undefined ? `${set.reps}` : '—';
+    return `${weightStr} × ${repsStr}`;
   }
 }
