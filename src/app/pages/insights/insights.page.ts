@@ -63,18 +63,24 @@ export class InsightsPage implements OnInit, ViewWillEnter {
 
   /**
    * Load completed sessions and recent PRs from IndexedDB.
+   * Uses bounded queries where possible for performance.
    */
   private async loadSessions(): Promise<void> {
     this.isLoading = true;
     try {
-      // Load sessions and PRs in parallel
-      const [sessions, prEvents] = await Promise.all([
-        this.db.getCompletedSessions(),
-        this.db.getRecentPREvents(10)
+      // Calculate 28-day cutoff for weekly insights
+      const fourWeeksAgo = new Date();
+      fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+
+      // Load all data in parallel using bounded queries
+      const [allSessions, sessionsLast28Days, prEvents] = await Promise.all([
+        this.db.getCompletedSessions(),           // Full history list (needs all)
+        this.db.getCompletedSessionsSince(fourWeeksAgo), // Bounded for weekly counts
+        this.db.getRecentPREvents(10)             // Bounded to 10
       ]);
 
-      this.sessions = sessions;
-      this.calculateWeeklyInsights();
+      this.sessions = allSessions;
+      this.calculateWeeklyInsights(sessionsLast28Days);
 
       // Load exercise names for PRs
       if (prEvents.length > 0) {
@@ -102,8 +108,10 @@ export class InsightsPage implements OnInit, ViewWillEnter {
   /**
    * Calculate sessions per week for the last 4 weeks.
    * Uses Monday as week start (AU-friendly).
+   *
+   * @param recentSessions - Sessions from the last 28 days (bounded query result)
    */
-  private calculateWeeklyInsights(): void {
+  private calculateWeeklyInsights(recentSessions: Session[]): void {
     const now = new Date();
     
     // Get the most recent Monday (start of current week)
@@ -122,7 +130,7 @@ export class InsightsPage implements OnInit, ViewWillEnter {
       weekBoundaries.push({ start: weekStart, end: weekEnd, label });
     }
     
-    // Count sessions per week
+    // Count sessions per week (using bounded sessions from last 28 days)
     const weeklyCounts: WeeklyBreakdown[] = weekBoundaries.map(week => ({
       weekLabel: week.label,
       count: 0
@@ -130,7 +138,7 @@ export class InsightsPage implements OnInit, ViewWillEnter {
     
     let totalLast4Weeks = 0;
     
-    for (const session of this.sessions) {
+    for (const session of recentSessions) {
       if (!session.endedAt) continue;
       
       const sessionDate = new Date(session.endedAt);

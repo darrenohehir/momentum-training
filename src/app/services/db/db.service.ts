@@ -207,21 +207,64 @@ export class DbService extends Dexie {
 
   /**
    * Get all completed sessions (where endedAt exists), sorted by endedAt descending.
-   * @param limit Optional limit on number of sessions to return
+   *
+   * Note: This method fetches ALL completed sessions. For bounded queries, use:
+   * - getRecentCompletedSessions(limit) for recent N sessions
+   * - getCompletedSessionsSince(date) for sessions after a date
+   *
+   * @param limit Optional limit on number of sessions to return (applied after fetch)
    */
   async getCompletedSessions(limit?: number): Promise<Session[]> {
-    // Dexie doesn't support filtering by "field exists", so we fetch all and filter
-    const allSessions = await this.sessions.toArray();
-    const completedSessions = allSessions
-      .filter(s => s.endedAt !== undefined)
-      .sort((a, b) => {
-        // Sort by endedAt descending (newest first)
-        const aEnd = new Date(a.endedAt!).getTime();
-        const bEnd = new Date(b.endedAt!).getTime();
-        return bEnd - aEnd;
-      });
+    // Use the endedAt index with above('') to get only completed sessions
+    // ISO strings sort lexicographically, reverse() gives newest first
+    const completedSessions = await this.sessions
+      .where('endedAt')
+      .above('')
+      .reverse()
+      .toArray();
 
     return limit ? completedSessions.slice(0, limit) : completedSessions;
+  }
+
+  /**
+   * Get recent completed sessions using the endedAt index.
+   * More efficient than getCompletedSessions() for fetching a limited number of recent sessions.
+   *
+   * @param limit Maximum number of sessions to return
+   * @returns Completed sessions sorted by endedAt descending (newest first)
+   */
+  async getRecentCompletedSessions(limit: number): Promise<Session[]> {
+    // Use the endedAt index to get sessions where endedAt is defined
+    // ISO strings sort lexicographically, so we can use reverse() for descending order
+    // Filter by endedAt > '' to exclude undefined/null values (they don't match the index anyway)
+    const sessions = await this.sessions
+      .where('endedAt')
+      .above('')
+      .reverse()
+      .limit(limit)
+      .toArray();
+
+    return sessions;
+  }
+
+  /**
+   * Get completed sessions since a given date using the endedAt index.
+   * Useful for bounded queries like "sessions in the last 28 days".
+   *
+   * @param sinceDate The cutoff date (sessions with endedAt >= this date are included)
+   * @returns Completed sessions sorted by endedAt descending (newest first)
+   */
+  async getCompletedSessionsSince(sinceDate: Date): Promise<Session[]> {
+    const sinceIso = sinceDate.toISOString();
+
+    // Use the endedAt index to get sessions where endedAt >= sinceDate
+    const sessions = await this.sessions
+      .where('endedAt')
+      .aboveOrEqual(sinceIso)
+      .reverse()
+      .toArray();
+
+    return sessions;
   }
 
   // ============================================

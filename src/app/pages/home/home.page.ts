@@ -78,14 +78,14 @@ export class HomePage implements OnInit, OnDestroy, ViewWillEnter {
   private async loadData(): Promise<void> {
     this.isLoading = true;
     try {
-      // Load completed sessions
-      const completedSessions = await this.db.getCompletedSessions();
+      // Load recent completed sessions (bounded query - only fetches what we need)
+      const recentSessions = await this.db.getRecentCompletedSessions(MAX_RECENT_SESSIONS);
 
-      // Calculate momentum
-      this.momentum = this.momentumService.calculateMomentum(completedSessions);
+      // Calculate momentum (only needs the most recent session)
+      this.momentum = this.momentumService.calculateMomentum(recentSessions);
 
-      // Get recent sessions (already sorted newest first)
-      this.recentSessions = completedSessions.slice(0, MAX_RECENT_SESSIONS);
+      // Store for display
+      this.recentSessions = recentSessions;
 
       // Load gamification state
       const gamificationState = await this.db.getGamificationState();
