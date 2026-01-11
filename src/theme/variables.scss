@@ -9,7 +9,7 @@
  * - Primary text: Soft off-white (#E6E7EB)
  * - Secondary text: Muted grey (#9BA1AC)
  * - Tertiary text: Low-contrast grey (#6F7682)
- * - Accent: Restrained cyan-blue (#4FA3D1)
+ * - Accent: Bright cyan-blue (#41afec)
  */
 
 // Design tokens (reference values)
@@ -21,9 +21,9 @@ $text-primary: #E6E7EB;
 $text-secondary: #9BA1AC;
 $text-tertiary: #6F7682;
 
-$accent-primary: #4FA3D1;
-$accent-muted: #3D8DB8;
-$accent-subtle: rgba(79, 163, 209, 0.25);
+$accent-primary: #41afec;
+$accent-muted: #3699d0;
+$accent-subtle: rgba(65, 175, 236, 0.25);
 
 $success: #5FAF7A;
 $warning: #C9A24D;
@@ -32,11 +32,11 @@ $danger: #C56B6B;
 :root {
   // Primary (accent) color
   --ion-color-primary: #{$accent-primary};
-  --ion-color-primary-rgb: 79, 163, 209;
+  --ion-color-primary-rgb: 65, 175, 236;
   --ion-color-primary-contrast: #000000;
   --ion-color-primary-contrast-rgb: 0, 0, 0;
   --ion-color-primary-shade: #{$accent-muted};
-  --ion-color-primary-tint: #61acd6;
+  --ion-color-primary-tint: #54b7ee;
 
   // Secondary (muted)
   --ion-color-secondary: #{$text-secondary};
