@@ -797,9 +797,9 @@ To avoid overloading Home and to keep navigation semantically correct:
 - Home shows a compact “Recent sessions” preview:
   - Show last 5 **completed** sessions only (`endedAt` exists)
   - Each item shows:
-    - Date (scannable format)
-    - Quest name if present, otherwise a neutral fallback (e.g. “Session” or “Untitled session”)
-    - Duration (optional)
+    - Date (scannable format, consistent with other Date formats used in the UI)
+    - Quest name if present, otherwise a neutral fallback (“Session”)
+    - Duration (If duration is < 1 min → show “1 min”)
 - Add a “See all” action that navigates to the full History screen.
 - Tapping a session navigates to the existing read-only session detail view.
 

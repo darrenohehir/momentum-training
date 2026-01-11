@@ -57,8 +57,11 @@
           (click)="viewSession(session)"
         >
           <ion-label>
-            <h2>{{ formatDate(session.endedAt!) }}</h2>
-            <p *ngIf="getDuration(session) as duration">{{ duration }} min</p>
+            <h2>{{ getQuestName(session) }}</h2>
+            <p>
+              {{ formatDate(session.endedAt!) }}
+              <span *ngIf="getDuration(session) as duration"> · {{ duration }} min</span>
+            </p>
           </ion-label>
         </ion-item>
       </ion-list>

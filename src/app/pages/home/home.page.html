@@ -78,6 +78,9 @@
   <!-- Recent Sessions -->
   <div class="section-header">
     <h2>Recent Sessions</h2>
+    <button class="see-all-link" (click)="goToHistory()" *ngIf="recentSessions.length > 0">
+      See all
+    </button>
   </div>
 
   <!-- Loading Sessions -->
@@ -102,8 +105,11 @@
         (click)="viewSession(session)"
       >
         <ion-label>
-          <h3>{{ formatFullDate(session.endedAt) }}</h3>
-          <p *ngIf="getDuration(session) as duration">{{ duration }} min</p>
+          <h3>{{ getQuestName(session) }}</h3>
+          <p>
+            {{ formatFullDate(session.endedAt) }}
+            <span *ngIf="getDuration(session) as duration"> · {{ duration }} min</span>
+          </p>
         </ion-label>
       </ion-item>
     </ion-list>

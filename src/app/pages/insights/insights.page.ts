@@ -1,8 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
-import { Session } from '../../models';
+import { Session, QuestId } from '../../models';
 import { DbService } from '../../services/db';
+
+/** Quest ID to display name mapping */
+const QUEST_NAMES: Record<QuestId, string> = {
+  'quick': 'Quick Session',
+  'full-body': 'Full Body',
+  'upper': 'Upper Body',
+  'lower': 'Lower Body'
+};
 
 @Component({
   selector: 'app-insights',
@@ -69,11 +77,23 @@ export class InsightsPage implements OnInit, ViewWillEnter {
 
   /**
    * Calculate duration in minutes.
+   * Returns at least 1 minute for very short sessions.
    */
   getDuration(session: Session): number | null {
     if (!session.startedAt || !session.endedAt) return null;
     const start = new Date(session.startedAt).getTime();
     const end = new Date(session.endedAt).getTime();
-    return Math.round((end - start) / (1000 * 60));
+    const minutes = Math.round((end - start) / (1000 * 60));
+    return Math.max(1, minutes);
+  }
+
+  /**
+   * Get quest name or fallback to "Session".
+   */
+  getQuestName(session: Session): string {
+    if (session.questId && QUEST_NAMES[session.questId]) {
+      return QUEST_NAMES[session.questId];
+    }
+    return 'Session';
   }
 }
