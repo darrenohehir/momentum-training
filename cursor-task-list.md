@@ -360,29 +360,48 @@ Empty is valid. Silence is preferred.
 
 ---
 
-### Task 4B.4 – Post-session review surface (descriptive only)
+### Task 4B.4 – Post-session review (receipt + easy correction)
 
 **Why now**
-Before XP exists, users need confidence in _what was logged_, not evaluation of _how well they did_.
+Before gamification mechanisms like XP exists, users need confidence in what was recorded and an easy way to correct mistakes while the session is still fresh — without introducing any “approval” or save-state behaviour.
+
+This screen should function like a calm **receipt**:
+
+- “Here’s what we logged.”
+- “If something’s wrong, you can fix it.”
+- “Otherwise, you’re done.”
+
+---
+
+#### Implementation location
+
+- Update the existing **Session Complete / Session Summary** screen.
+- Relevant file: `session-summary.page.html`
+- Do **not** introduce a new “review” screen or an “approve” step.
 
 ---
 
 #### Scope
 
-- After finishing a session:
-
-  - Show all exercises and sets logged
-  - Allow immediate edits (optional but preferred)
+- Keep the existing completion framing (e.g. “Session Complete”) and summary content.
+- Ensure the screen clearly supports verification and correction:
+  - List exercises performed (already present).
+  - Provide an **explicit, secondary** action to edit the completed session (e.g. “Edit session”).
+    - This should reopen the just-completed session in an editable state.
+    - Prefer a calm placement (secondary button or text button), not competing with “Done”.
+  - Optional (nice-to-have): make each exercise card tappable to jump into editing that exercise’s sets.
 
 ---
 
 #### Guardrails
 
-- No praise
-- No success framing
-- No performance interpretation
+- No “Review → Approve → Complete” flow (completion is an acknowledgement, not a decision).
+- No praise, no celebration escalation, no success framing.
+- No performance interpretation or evaluative metrics on this screen (e.g. avoid volume totals, PR callouts, comparisons).
+- No new confirmation dialogs.
+- Edits should respect immediate persistence (no save button introduced).
 
-This screen is about correctness, not reflection or motivation.
+This screen is about correctness and trust, not motivation.
 
 ---
 

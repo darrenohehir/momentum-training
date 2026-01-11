@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ViewWillEnter } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId } from '../../models';
 import { DbService } from '../../services/db';
 
@@ -26,7 +27,7 @@ interface ExerciseSummary {
   styleUrls: ['./session-summary.page.scss'],
   standalone: false
 })
-export class SessionSummaryPage implements OnInit {
+export class SessionSummaryPage implements OnInit, ViewWillEnter {
   /** Session loaded from DB */
   session: Session | null = null;
 
@@ -39,21 +40,31 @@ export class SessionSummaryPage implements OnInit {
   /** Error state */
   loadError = false;
 
+  /** Session ID from route (stored for re-fetching) */
+  private sessionId: string | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private db: DbService
   ) {}
 
-  async ngOnInit(): Promise<void> {
-    const sessionId = this.route.snapshot.paramMap.get('id');
-    if (!sessionId) {
+  ngOnInit(): void {
+    // Extract session ID from route params (only once)
+    this.sessionId = this.route.snapshot.paramMap.get('id');
+    if (!this.sessionId) {
       this.loadError = true;
       this.isLoading = false;
-      return;
     }
+  }
 
-    await this.loadSessionSummary(sessionId);
+  /**
+   * Ionic lifecycle hook: called every time the page becomes active.
+   * Re-fetches session data to ensure the summary reflects the latest state.
+   */
+  async ionViewWillEnter(): Promise<void> {
+    if (!this.sessionId) return;
+    await this.loadSessionSummary(this.sessionId);
   }
 
   /**
@@ -109,6 +120,15 @@ export class SessionSummaryPage implements OnInit {
    */
   goHome(): void {
     this.router.navigate(['/tabs/home']);
+  }
+
+  /**
+   * Navigate to the session page to edit the completed session.
+   * The session page supports editing completed sessions.
+   */
+  editSession(): void {
+    if (!this.session) return;
+    this.router.navigate(['/session', this.session.id]);
   }
 
   /**

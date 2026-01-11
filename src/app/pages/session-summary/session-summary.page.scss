@@ -32,23 +32,21 @@
   }
 }
 
-/* Success header */
-.success-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* Summary header (receipt framing) */
+.summary-header {
   text-align: center;
-  padding: 24px 0;
-
-  ion-icon {
-    font-size: 64px;
-    margin-bottom: 12px;
-  }
+  padding: 16px 0 24px 0;
 
   h1 {
-    margin: 0;
-    font-size: 1.5rem;
+    margin: 0 0 4px 0;
+    font-size: 1.4rem;
     font-weight: 600;
+  }
+
+  .summary-subtext {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.6;
   }
 }
 
@@ -97,10 +95,10 @@
     font-weight: 600;
   }
 
-  .total-stats {
+  .exercise-count {
     margin: 0 0 12px 0;
-    font-size: 0.9rem;
-    opacity: 0.6;
+    font-size: 0.85rem;
+    opacity: 0.5;
   }
 
   ion-list {
@@ -110,6 +108,7 @@
       --background: var(--ion-color-step-100);
       margin-bottom: 8px;
       border-radius: 8px;
+      cursor: pointer;
 
       h2 {
         font-size: 1rem;
@@ -138,8 +137,21 @@
   opacity: 0.5;
 }
 
-/* Done button */
-.done-button {
+/* Actions */
+.summary-actions {
   margin-top: 24px;
+}
+
+.done-button {
+  margin-bottom: 8px;
+}
+
+.edit-button {
+  --color: var(--ion-color-step-500);
+  font-size: 0.9rem;
+
+  &:hover {
+    --color: var(--ion-color-primary);
+  }
 }
 

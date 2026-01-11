@@ -27,10 +27,10 @@
 
   <!-- Summary Content -->
   <ng-container *ngIf="!isLoading && !loadError && session">
-    <!-- Success Icon -->
-    <div class="success-header">
-      <ion-icon name="checkmark-circle" color="success"></ion-icon>
+    <!-- Header (receipt framing) -->
+    <div class="summary-header">
       <h1>Session Complete</h1>
+      <p class="summary-subtext">Here's what was logged.</p>
     </div>
 
     <!-- Session Stats Card -->
@@ -66,11 +66,16 @@
 
     <!-- Exercises Summary -->
     <div class="exercises-summary" *ngIf="exercises.length > 0">
-      <h2>Exercises Performed</h2>
-      <p class="total-stats">{{ exercises.length }} exercises · {{ getTotalSets() }} sets</p>
+      <h2>Exercises</h2>
+      <p class="exercise-count">{{ exercises.length }} exercises · {{ getTotalSets() }} sets logged</p>
 
       <ion-list>
-        <ion-item *ngFor="let exercise of exercises">
+        <ion-item
+          *ngFor="let exercise of exercises"
+          button
+          detail="true"
+          (click)="editSession()"
+        >
           <ion-label>
             <h2>{{ exercise.name }}</h2>
             <p>{{ formatCategory(exercise.category) }}</p>
@@ -85,14 +90,25 @@
       <p>No exercises were logged in this session.</p>
     </div>
 
-    <!-- Done Button -->
-    <ion-button
-      expand="block"
-      class="done-button"
-      (click)="goHome()"
-    >
-      Done
-    </ion-button>
+    <!-- Actions -->
+    <div class="summary-actions">
+      <ion-button
+        expand="block"
+        class="done-button"
+        (click)="goHome()"
+      >
+        Done
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        fill="clear"
+        class="edit-button"
+        (click)="editSession()"
+      >
+        Edit session
+      </ion-button>
+    </div>
   </ng-container>
 </ion-content>
 

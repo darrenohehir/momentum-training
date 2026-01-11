@@ -240,8 +240,9 @@ ion-reorder-group {
 .set-row {
   display: flex;
   align-items: center;
-  padding: 4px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--ion-color-step-150);
+  min-height: 52px; // Ensure adequate touch target height
 
   &:last-child {
     border-bottom: none;
@@ -284,16 +285,30 @@ ion-reorder-group {
     --background: var(--ion-color-step-150);
     --padding-start: 8px;
     --padding-end: 8px;
-    --padding-top: 6px;
-    --padding-bottom: 6px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
     border-radius: 6px;
-    font-size: 0.95rem;
+    font-size: 1rem;
     text-align: center;
     margin: 0 4px;
-    min-height: 36px;
+    min-height: 44px; // iOS minimum touch target
 
     &::part(native) {
       text-align: center;
+      // Remove spinner controls from number inputs (legacy browsers)
+      appearance: textfield;
+      -moz-appearance: textfield;
+      &::-webkit-outer-spin-button,
+      &::-webkit-inner-spin-button {
+        appearance: none;
+        -webkit-appearance: none;
+        margin: 0;
+      }
+    }
+
+    // Ensure proper focus styling
+    &.has-focus {
+      --background: var(--ion-color-step-200);
     }
   }
 }
