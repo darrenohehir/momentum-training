@@ -636,46 +636,32 @@ Gamification should support the habit of training — not become the reason for 
 
 ---
 
-## Phase 7 – Bodyweight Logging
+## Phase 7 – Insights (MVP Only)
 
-### Task 7.1 – Bodyweight entry
-
-- Add bodyweight log screen:
-  - Date
-  - Weight (kg)
-  - Optional note
-- Persist to IndexedDB.
-
-### Task 7.2 – Bodyweight history view
-
-- Simple list view (newest first).
-- Graphing is out of scope for MVP.
-
----
-
-## Phase 8 – Insights (MVP Only)
-
-### Task 8.1 – Workouts per week (rolling 4 weeks)
+### Task 7.1 – Workouts per week (rolling 4 weeks)
 
 - Compute sessions per week for last 4 weeks.
 - Display simple numeric summary (no heavy charts).
 
-### Task 8.2 – Recent sessions list
+### Task 7.2 – Enhance Recent Sessions (Home)
 
-- Show last 5 sessions with:
+- Update the Recent Sessions list on Home to show:
   - Date
-  - Quest name (if any)
-  - Basic volume summary (optional).
+  - Quest name (if any), or "Quick Session" as fallback
+  - Duration
+  - Exercise count (optional)
+- Keep display compact and scannable.
+- No evaluative language (e.g., "good session").
 
-### Task 8.3 – PR highlights log
+### Task 7.3 – PR highlights log
 
 - Show recent PR events (derived from sessions).
 
 ---
 
-## Phase 9 – Export / Import (Backup)
+## Phase 8 – Export / Import (Backup)
 
-### Task 9.1 – Export
+### Task 8.1 – Export
 
 - Generate JSON with:
   - schemaVersion
@@ -683,12 +669,29 @@ Gamification should support the habit of training — not become the reason for 
   - All entity arrays
 - Trigger file download.
 
-### Task 9.2 – Import
+### Task 8.2 – Import
 
 - File upload
 - Validate schemaVersion
 - Confirm destructive action
 - Replace all local data with imported data.
+
+---
+
+## Phase 9 – Bodyweight Logging
+
+### Task 9.1 – Bodyweight entry
+
+- Add bodyweight log screen:
+  - Date
+  - Weight (kg)
+  - Optional note
+- Persist to IndexedDB.
+
+### Task 9.2 – Bodyweight history view
+
+- Simple list view (newest first).
+- Graphing is out of scope for MVP.
 
 ---
 
