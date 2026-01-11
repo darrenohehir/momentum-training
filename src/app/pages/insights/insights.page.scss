@@ -83,6 +83,14 @@
       font-size: 1.1rem;
       font-weight: 500;
     }
+
+    // Weekly breakdown (per-week counts)
+    .weekly-breakdown {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      opacity: 0.5;
+      font-family: 'IBM Plex Mono', monospace;
+    }
   }
 }
 
