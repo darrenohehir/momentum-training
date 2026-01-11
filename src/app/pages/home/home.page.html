@@ -10,71 +10,89 @@
     Start Session
   </ion-button>
 
+  <!-- Loading State -->
+  <ng-container *ngIf="isLoading">
+    <ion-card class="status-card">
+      <ion-card-content>
+        <ion-skeleton-text animated style="width: 40%; height: 24px;"></ion-skeleton-text>
+        <ion-skeleton-text animated style="width: 60%; height: 16px; margin-top: 8px;"></ion-skeleton-text>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
   <!-- Momentum Status -->
-  <ion-card class="status-card">
-    <ion-card-header>
-      <ion-card-subtitle>Momentum</ion-card-subtitle>
-      <ion-card-title class="momentum-status">Active</ion-card-title>
-    </ion-card-header>
-    <ion-card-content>
-      <p class="days-remaining">5 days remaining</p>
-    </ion-card-content>
-  </ion-card>
-
-  <!-- XP / Level -->
-  <ion-card class="status-card">
-    <ion-card-header>
-      <ion-card-subtitle>Progress</ion-card-subtitle>
-    </ion-card-header>
-    <ion-card-content>
-      <div class="xp-level-row">
-        <div class="stat">
-          <span class="stat-value">1,250</span>
-          <span class="stat-label">XP</span>
+  <ng-container *ngIf="!isLoading && momentum">
+    <ion-card class="status-card momentum-card">
+      <ion-card-content>
+        <div class="momentum-header">
+          <span class="momentum-label">Momentum</span>
+          <span
+            class="momentum-status"
+            [class.active]="momentum.status === 'Active'"
+            [class.paused]="momentum.status === 'Paused'"
+          >
+            {{ momentum.status }}
+          </span>
         </div>
-        <div class="stat">
-          <span class="stat-value">2</span>
-          <span class="stat-label">Level</span>
-        </div>
-      </div>
-    </ion-card-content>
-  </ion-card>
 
-  <!-- Last Sessions -->
+        <div class="momentum-details">
+          <p class="days-remaining">{{ formatDaysRemaining(momentum.daysRemaining) }}</p>
+          <p class="last-session" *ngIf="momentum.lastSessionDate">
+            Last session: {{ formatDate(momentum.lastSessionDate) }}
+          </p>
+          <p class="last-session" *ngIf="!momentum.lastSessionDate">
+            No sessions yet
+          </p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <!-- No Momentum Data (edge case) -->
+  <ng-container *ngIf="!isLoading && !momentum">
+    <ion-card class="status-card">
+      <ion-card-content>
+        <p class="empty-momentum">Start a session to begin tracking your momentum.</p>
+      </ion-card-content>
+    </ion-card>
+  </ng-container>
+
+  <!-- Recent Sessions -->
   <div class="section-header">
     <h2>Recent Sessions</h2>
   </div>
 
-  <ion-list class="sessions-list">
-    <ion-item>
-      <ion-label>
-        <h3>Upper Body</h3>
-        <p>Jan 9, 2026 · 45 min · 320 XP</p>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>
-        <h3>Full Body</h3>
-        <p>Jan 7, 2026 · 52 min · 385 XP</p>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>
-        <h3>Quick Session</h3>
-        <p>Jan 5, 2026 · 28 min · 210 XP</p>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>
-        <h3>Lower Body</h3>
-        <p>Jan 3, 2026 · 38 min · 295 XP</p>
-      </ion-label>
-    </ion-item>
-    <ion-item>
-      <ion-label>
-        <h3>Full Body</h3>
-        <p>Jan 1, 2026 · 55 min · 410 XP</p>
-      </ion-label>
-    </ion-item>
-  </ion-list>
+  <!-- Loading Sessions -->
+  <ng-container *ngIf="isLoading">
+    <ion-list class="sessions-list">
+      <ion-item *ngFor="let i of [1, 2, 3]">
+        <ion-label>
+          <ion-skeleton-text animated style="width: 50%;"></ion-skeleton-text>
+          <ion-skeleton-text animated style="width: 70%; margin-top: 4px;"></ion-skeleton-text>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-container>
+
+  <!-- Sessions List -->
+  <ng-container *ngIf="!isLoading">
+    <ion-list *ngIf="recentSessions.length > 0" class="sessions-list">
+      <ion-item
+        *ngFor="let session of recentSessions"
+        button
+        detail="true"
+        (click)="viewSession(session)"
+      >
+        <ion-label>
+          <h3>{{ formatFullDate(session.endedAt) }}</h3>
+          <p *ngIf="getDuration(session) as duration">{{ duration }} min</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+
+    <!-- Empty State -->
+    <div *ngIf="recentSessions.length === 0" class="empty-sessions">
+      <p>No completed sessions yet.</p>
+    </div>
+  </ng-container>
 </ion-content>

@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController, ItemReorderEventDetail, ViewWillEnter } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import { DbService, LastAttemptResult } from '../../services/db';
+import { AppEventsService } from '../../services/events';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
@@ -101,7 +102,8 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     private route: ActivatedRoute,
     private router: Router,
     private db: DbService,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private appEvents: AppEventsService
   ) {
     // Set up debounced auto-save for set updates
     this.setUpdateSubject.pipe(
@@ -341,6 +343,9 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
       this.session.updatedAt = now;
 
       await this.db.updateSession(this.session);
+
+      // Notify other components that session data has changed
+      this.appEvents.emitSessionDataChanged();
 
       // Navigate to session summary
       this.router.navigate(['/session', this.session.id, 'summary']);

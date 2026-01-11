@@ -33,6 +33,7 @@ No authentication, no cloud sync, no social features.
 - Exercise removal with undo
 - Exercise reordering (drag-and-drop)
 - Session history (read-only)
+- **Momentum system** – Active/Paused status based on 7-day window
 
 ## Local Development
 

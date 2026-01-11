@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ViewWillEnter } from '@ionic/angular';
+import { ViewWillEnter, NavController } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId } from '../../models';
 import { DbService } from '../../services/db';
 
@@ -46,6 +46,7 @@ export class SessionSummaryPage implements OnInit, ViewWillEnter {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private navController: NavController,
     private db: DbService
   ) {}
 
@@ -117,9 +118,14 @@ export class SessionSummaryPage implements OnInit, ViewWillEnter {
 
   /**
    * Navigate back to home.
+   * Navigate to /tabs and let the default redirect handle going to home.
+   * This ensures the tabs container is properly initialized and lifecycle hooks fire.
    */
   goHome(): void {
-    this.router.navigate(['/tabs/home']);
+    this.navController.navigateRoot('/tabs', {
+      animated: true,
+      animationDirection: 'back'
+    });
   }
 
   /**

@@ -453,26 +453,169 @@ Everything remains **descriptive**, never interpretive.
 
 ## Phase 5 – Gamification Logic (Quiet, Intentional)
 
-### Task 5.1 – Momentum calculation
+### Context
 
-- Implement rolling 7-day momentum logic:
-  - Active if latest session date >= (now - 7 days)
+Phase 5 introduces **gamification as reinforcement**, not as the core product.
+
+The intent is to:
+
+- Support habit formation and prioritisation (e.g. “go to the gym soon”)
+- Acknowledge consistency without judgement
+- Avoid letting rewards overshadow the primary value: fast, trustworthy workout logging
+
+To achieve this, Phase 5 is deliberately split into two sub-phases:
+
+- **Phase 5A** focuses on _logic and minimal surfacing_:
+  - Build the momentum and XP engines
+  - Surface only what is necessary to support behaviour
+- **Phase 5B** focuses on _careful UI exposure_:
+  - Gradually introduce XP/Level visibility
+  - Keep all progress indicators subdued and non-dominant
+
+This separation prevents reward mechanics from compensating for UX gaps or becoming the focal point of the app.
+
+---
+
+## Phase 5A – Gamification Engine + Minimal Surfacing
+
+### Task 5A.1 – Momentum calculation
+
+**Purpose**
+Provide light, factual pressure to maintain training cadence without using streaks or guilt framing.
+
+---
+
+#### Scope
+
+- Determine momentum using **completed sessions only** (`endedAt` exists).
+- Momentum is **Active** if the most recent completed session date is within the last **7 local calendar days**.
+  - Use local day boundaries (not rolling 168-hour windows).
 - Calculate:
-  - Momentum status (Active / Paused)
-  - Days remaining in window
-- Display on Home.
+  - Momentum status: `Active` / `Paused`
+  - Days remaining in the 7-day window (0–7)
 
-### Task 5.2 – XP engine
+---
 
-- On session completion:
-  - +100 XP
+#### Display (Home, minimal)
+
+- Show:
+  - Momentum status
+  - Last session date
+  - Days remaining in the 7-day window (e.g. “2 days remaining”)
+- Allow “0 days remaining” to be shown when the window has elapsed.
+- Keep language neutral and factual (no warnings, no encouragement copy).
+
+---
+
+### Task 5A.2 – XP engine
+
+**Purpose**
+Acknowledge meaningful effort consistently, without encouraging optimisation or grind behaviour.
+
+---
+
+#### Scope
+
+- On **session completion** (when `endedAt` is set for the first time):
+  - +100 XP per completed session
   - +5 XP per set logged in that session
-- Store totalXp in GamificationState.
+- Persist XP in `GamificationState` (`totalXp`).
+- XP must only be awarded **once per session**.
+  - Edits to completed sessions must not re-award XP.
 
-### Task 5.3 – Level calculation
+---
 
-- Level = floor(totalXp / 1000) + 1
-- Display XP + Level on Home (small, not dominant).
+#### Guardrails
+
+- No celebratory UI
+- No XP popups
+- No progress bars
+- No “XP gained” messaging yet
+
+---
+
+### Task 5A.3 – Level calculation
+
+**Purpose**
+Provide a stable, predictable sense of progression tied to long-term engagement.
+
+---
+
+#### Scope
+
+- Level is calculated linearly:
+  - `level = floor(totalXp / 1000) + 1`
+- Store level as derived state (do not persist separately unless required).
+- Linear progression is intentional for now; no difficulty scaling in Phase 5A.
+
+---
+
+#### Guardrails
+
+- Do not display level progression UI yet beyond what is strictly required.
+- Avoid “XP to next level” concepts.
+
+---
+
+## Phase 5B – Careful Progress Surfacing
+
+### Context
+
+Phase 5B introduces **visibility** of XP and levels without letting them dominate attention or behaviour.
+
+The goal is:
+
+- Make progress discoverable, not attention-grabbing
+- Avoid turning Home into a dashboard
+- Preserve logging as the primary action
+
+---
+
+### Task 5B.1 – XP & Level visibility (subdued)
+
+#### Scope
+
+- Introduce XP and Level visibility in the app:
+  - Prefer secondary surfaces (e.g. Profile / Progress / Stats area)
+  - If shown on Home, keep it visually small and non-dominant
+- Show:
+  - Current level
+  - Total XP (optional)
+
+---
+
+#### Guardrails
+
+- No progress bars
+- No “XP to next level”
+- No level-up animations or popups
+- No celebratory language
+
+Progress should feel informational, not aspirational.
+
+---
+
+### Task 5B.2 – Momentum + progress alignment
+
+#### Scope
+
+- Ensure Momentum remains the **primary behavioural signal**.
+- XP and Level must never override or visually compete with Momentum status.
+- Momentum communicates _recency and consistency_.
+- XP/Level communicates _long-term engagement_.
+
+---
+
+## Phase 5 Guardrails (apply to all tasks)
+
+- No streaks
+- No guilt framing
+- No push notifications
+- No competitive language
+- No social comparison
+- No performance interpretation
+
+Gamification should support the habit of training — not become the reason for it.
 
 ---
 
