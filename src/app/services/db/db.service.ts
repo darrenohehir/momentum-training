@@ -11,6 +11,19 @@ import {
 } from '../../models';
 
 /**
+ * Result of a last attempt query for Ghost Mode.
+ * Contains the previous session exercise and its sets.
+ */
+export interface LastAttemptResult {
+  /** The SessionExercise from the previous completed session */
+  sessionExercise: SessionExercise;
+  /** The Session the attempt belongs to (for date display) */
+  session: Session;
+  /** All sets from that attempt, ordered by setIndex ascending */
+  sets: Set[];
+}
+
+/**
  * Database name for IndexedDB.
  */
 export const DB_NAME = 'MomentumDB';
@@ -237,6 +250,93 @@ export class DbService extends Dexie {
     if (existing.length === 0) return 0;
     const maxIndex = Math.max(...existing.map(se => se.orderIndex));
     return maxIndex + 1;
+  }
+
+  // ============================================
+  // Ghost Mode: Last Attempt queries
+  // ============================================
+
+  /**
+   * Get the most recent completed previous attempt for an exercise.
+   *
+   * Ghost Mode query: returns the SessionExercise and Sets from the most
+   * recent completed session where this exercise was performed.
+   *
+   * Filtering rules:
+   * - Excludes the current session (never show in-progress data as ghost)
+   * - Only considers completed sessions (endedAt must be defined)
+   * - Orders by session.endedAt descending to find the most recent
+   *
+   * @param exerciseId - The exercise to find previous attempts for
+   * @param currentSessionId - The current session to exclude from results
+   * @returns LastAttemptResult with sessionExercise, session, and sets, or null if none exists
+   */
+  async getLastAttempt(
+    exerciseId: string,
+    currentSessionId: string
+  ): Promise<LastAttemptResult | null> {
+    // Step 1: Find all SessionExercise records for this exercise
+    const sessionExercises = await this.sessionExercises
+      .where('exerciseId')
+      .equals(exerciseId)
+      .toArray();
+
+    if (sessionExercises.length === 0) {
+      return null;
+    }
+
+    // Step 2: Get unique session IDs (excluding current session)
+    const sessionIds = [
+      ...new Set(
+        sessionExercises
+          .map(se => se.sessionId)
+          .filter(id => id !== currentSessionId)
+      )
+    ];
+
+    if (sessionIds.length === 0) {
+      return null;
+    }
+
+    // Step 3: Fetch those sessions and filter to completed only
+    const sessions = await this.sessions
+      .where('id')
+      .anyOf(sessionIds)
+      .toArray();
+
+    // Filter to only completed sessions (endedAt must be defined)
+    const completedSessions = sessions.filter(s => s.endedAt !== undefined);
+
+    if (completedSessions.length === 0) {
+      return null;
+    }
+
+    // Step 4: Sort by endedAt descending to find the most recent
+    completedSessions.sort((a, b) => {
+      // Both have endedAt (filtered above), compare as ISO strings
+      return b.endedAt!.localeCompare(a.endedAt!);
+    });
+
+    const mostRecentSession = completedSessions[0];
+
+    // Step 5: Find the SessionExercise for this exercise in that session
+    const matchingSessionExercise = sessionExercises.find(
+      se => se.sessionId === mostRecentSession.id
+    );
+
+    if (!matchingSessionExercise) {
+      // Should not happen given our query, but handle gracefully
+      return null;
+    }
+
+    // Step 6: Fetch all sets for that SessionExercise, sorted by setIndex
+    const sets = await this.getSetsForSessionExercise(matchingSessionExercise.id);
+
+    return {
+      sessionExercise: matchingSessionExercise,
+      session: mostRecentSession,
+      sets
+    };
   }
 
   // ============================================

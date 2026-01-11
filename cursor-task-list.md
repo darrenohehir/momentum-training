@@ -140,22 +140,81 @@ Include:
 
 ## Phase 4 – Ghost Mode (“Previous You”)
 
+> **Intent:** Provide quiet, optional context from past sessions.
+> Ghost Mode should support decision-making without pressure, judgement, or interruption.
+
+---
+
 ### Task 4.1 – Last attempt query
 
-- For a given exerciseId:
-  - Fetch most recent previous SessionExercise + its Sets.
-- Ensure current session is excluded.
+- For a given `exerciseId`:
+
+  - Fetch the most recent **completed** `SessionExercise` and its Sets.
+  - Order by `session.endedAt DESC`.
+
+- Exclude:
+
+  - The current session.
+  - Any sessions without `endedAt`.
+
+- Return `null` cleanly if no previous attempt exists (this is a normal state).
+
+**UX acceptance criteria**
+
+- Query must be fast and non-blocking.
+- “No previous attempt” is not an error and should not surface warnings or empty placeholders.
+- Ghost data must always represent a finished effort (never partial data).
+
+---
 
 ### Task 4.2 – Display last attempt
 
-- In-session, show:
-  - Last attempt date
-  - List of sets (weight × reps)
+- In-session, for each exercise, optionally show:
+
+  - Last attempt date (neutral format, e.g. “Jan 3” or “Previous session”).
+  - List of sets (weight × reps).
+
+- Display should be visually secondary to current-session logging.
+
+**UX acceptance criteria**
+
+- Ghost data is **passive by default** (no banners, no callouts).
+- Visual weight is reduced (muted text, smaller size, secondary hierarchy).
+- Language is neutral and factual (no “beat”, “improve”, or comparative copy).
+- If no previous attempt exists:
+
+  - Show nothing, or
+  - Show a subtle “No previous session” line.
+
+- Ghost display must never block or interrupt logging.
+
+---
 
 ### Task 4.3 – Copy last attempt
 
-- Button copies previous sets into current session (new Set records).
-- Allow editing after copy.
+- Provide an explicit action to copy previous sets into the current session.
+- Copying creates **new Set records** linked to the current session.
+- Copied sets must be immediately editable.
+
+**UX acceptance criteria**
+
+- Copy action is **explicit and optional** (never automatic).
+- Button copy should be calm and factual (e.g. “Copy last sets”).
+- Copying must feel reversible:
+
+  - Sets can be edited or deleted immediately.
+  - No confirmation dialogs required.
+
+- Copying does not imply expectation or comparison.
+
+---
+
+### Phase 4 guardrails (apply to all tasks)
+
+- Ghost Mode provides **context, not instruction**.
+- No judgement, pressure, or competitive framing.
+- No interruptions to the logging flow.
+- Silence and subtlety are preferred over explicit feedback.
 
 ---
 
