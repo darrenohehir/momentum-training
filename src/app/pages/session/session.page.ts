@@ -512,4 +512,49 @@ export class SessionPage implements OnInit, OnDestroy {
     const repsStr = set.reps !== undefined ? `${set.reps}` : '—';
     return `${weightStr} × ${repsStr}`;
   }
+
+  /**
+   * Check if copy last sets action should be shown for an exercise.
+   * Only show when ghost exists with sets AND current exercise has no sets yet.
+   */
+  canCopyLastSets(item: SessionExerciseView): boolean {
+    const ghost = this.getGhost(item.exercise.id);
+    return ghost !== null && ghost.sets.length > 0 && item.sets.length === 0;
+  }
+
+  /**
+   * Copy sets from the last attempt into the current session exercise.
+   * Creates new Set records with new IDs, preserving weight/reps/rpe values.
+   */
+  async copyLastSets(item: SessionExerciseView): Promise<void> {
+    // Guard: check if copy is allowed
+    if (!this.canCopyLastSets(item)) return;
+
+    const ghost = this.getGhost(item.exercise.id);
+    if (!ghost || ghost.sets.length === 0) return;
+
+    try {
+      const now = new Date().toISOString();
+
+      // Create new Set records from the ghost sets
+      const newSets: Set[] = ghost.sets.map((templateSet, index) => ({
+        id: crypto.randomUUID(),
+        sessionExerciseId: item.sessionExercise.id,
+        setIndex: index,
+        weight: templateSet.weight,
+        reps: templateSet.reps,
+        rpe: templateSet.rpe,
+        isWarmup: templateSet.isWarmup,
+        createdAt: now
+      }));
+
+      // Persist all sets in a single transaction
+      await this.db.bulkAddSets(newSets);
+
+      // Update local state immediately
+      item.sets = newSets;
+    } catch (error) {
+      console.error('Failed to copy last sets:', error);
+    }
+  }
 }

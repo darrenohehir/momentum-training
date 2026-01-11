@@ -218,6 +218,133 @@ Include:
 
 ---
 
+## Phase 4B – Logging Confidence & Control
+
+**Purpose:**
+Harden the core logging loop so that:
+
+- actions feel reversible
+- mistakes feel cheap
+- the user never wonders “did that save?” or “can I fix this?”
+
+This is _not_ polish-for-polish’s-sake. It’s structural UX debt paydown.
+
+---
+
+### Task 4B.1 – Reversibility primitives (Undo, not confirmation)
+
+**Why now:**
+Immediate persistence without undo is fragile UX. You’ve accepted that tradeoff — now you balance it.
+
+**Scope:**
+
+- When deleting:
+
+  - a Set
+  - a SessionExercise
+
+- Show a **low-key undo affordance** (toast/snackbar style)
+
+**Rules:**
+
+- No modals
+- No “Are you sure?”
+- Undo window is short and silent
+- If user ignores it, action stands
+
+This is the keystone that makes _everything else_ feel safe.
+
+---
+
+### Task 4B.2 – Exercise ordering control
+
+**Why now:**
+Once Ghost Mode exists, order matters more. Users will change plans mid-session.
+
+**Scope:**
+
+- Reorder `SessionExercise` items
+- Update `orderIndex` immediately
+- Persist instantly
+
+**Guardrail:**
+
+- No “Edit mode”
+- No save state
+- Drag = truth
+
+This removes the feeling of being “locked into” a bad decision.
+
+---
+
+### Task 4B.3 – Input speed + focus flow
+
+**Why now:**
+Gamification amplifies behaviour. If behaviour is slow or fiddly, you amplify friction.
+
+**Scope (minimum viable):**
+
+- Correct mobile keyboards (`inputmode`)
+- Predictable focus order
+- “Add set” should never feel like a mode switch
+
+**Explicitly NOT:**
+
+- Validation warnings
+- Required fields
+- “Incomplete set” language
+
+Empty is allowed. Silence is preferred.
+
+---
+
+### Task 4B.4 – Post-session review surface (non-evaluative)
+
+**Why now:**
+Before XP exists, users need a _descriptive_ sense of completion.
+
+**Scope:**
+
+- After finishing a session:
+
+  - show what was logged
+  - allow immediate edits
+
+- No praise
+- No metrics framed as success/failure
+
+This is about **correctness**, not reflection yet.
+
+---
+
+### Task 4B.5 – Read-only history access (foundation only)
+
+**Why now:**
+Momentum depends on history being _real_ and inspectable.
+
+**Scope:**
+
+- List of past sessions (date, duration)
+- Tap → view session
+- Editing optional (read-only is fine for now)
+
+This grounds future insights and gamification in something tangible.
+
+---
+
+## Phase 4B Guardrails (important)
+
+- No rewards yet
+- No scores yet
+- No progress bars yet
+- No “you did X more than last time” yet
+- Everything is **descriptive**, never interpretive
+
+If Ghost Mode answers _“what happened before?”_,
+Phase 4B answers _“can I rely on this?”_
+
+---
+
 ## Phase 5 – Gamification Logic (Quiet, Intentional)
 
 ### Task 5.1 – Momentum calculation

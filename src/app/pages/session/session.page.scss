@@ -134,6 +134,19 @@
   white-space: nowrap;
 }
 
+/* Copy last sets button */
+.copy-sets-button {
+  margin-top: 8px;
+  --color: var(--ion-color-step-600);
+//   --padding-start: 0;
+  --padding-end: 0;
+  font-size: 0.75rem;
+
+  &:hover {
+    --color: var(--ion-color-primary);
+  }
+}
+
 /* RPE Toggle */
 .rpe-toggle {
   display: flex;

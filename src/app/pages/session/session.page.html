@@ -88,6 +88,17 @@
                     {{ formatGhostSet(set) }}
                   </span>
                 </div>
+                <!-- Copy last sets button (only when no sets logged yet) -->
+                <ion-button
+                  *ngIf="canCopyLastSets(item)"
+                  fill="clear"
+                  size="small"
+                  class="copy-sets-button"
+                  (click)="copyLastSets(item)"
+                >
+                  <ion-icon slot="start" name="copy-outline"></ion-icon>
+                  Copy last sets
+                </ion-button>
               </div>
             </ng-container>
 

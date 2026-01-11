@@ -402,4 +402,17 @@ export class DbService extends Dexie {
     const maxIndex = Math.max(...existing.map(s => s.setIndex));
     return maxIndex + 1;
   }
+
+  /**
+   * Bulk add multiple sets in a single transaction.
+   * Used for copying sets from a previous attempt.
+   * @param sets - Array of Set records to add
+   */
+  async bulkAddSets(sets: Set[]): Promise<void> {
+    if (sets.length === 0) return;
+
+    await this.transaction('rw', this.sets, async () => {
+      await this.sets.bulkAdd(sets);
+    });
+  }
 }
