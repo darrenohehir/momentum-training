@@ -560,6 +560,19 @@ export class DbService extends Dexie {
   }
 
   /**
+   * Get recent PR events, ordered by detection date (newest first).
+   * @param limit - Maximum number of PR events to return (default 10)
+   */
+  async getRecentPREvents(limit = 10): Promise<PREvent[]> {
+    // Get all PR events, sort by detectedAt descending, and limit
+    const allPRs = await this.prEvents.toArray();
+
+    return allPRs
+      .sort((a, b) => new Date(b.detectedAt).getTime() - new Date(a.detectedAt).getTime())
+      .slice(0, limit);
+  }
+
+  /**
    * Add multiple PR events in a single transaction.
    * Used when detecting PRs at session completion.
    * @param events - Array of PREvent records to add

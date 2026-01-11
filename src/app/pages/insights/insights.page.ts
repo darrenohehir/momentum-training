@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
-import { Session, QuestId } from '../../models';
+import { Session, QuestId, PREvent } from '../../models';
 import { DbService } from '../../services/db';
 
 /** Quest ID to display name mapping */
@@ -16,6 +16,11 @@ const QUEST_NAMES: Record<QuestId, string> = {
 interface WeeklyBreakdown {
   weekLabel: string;  // e.g., "This week", "Last week", "2 weeks ago", "3 weeks ago"
   count: number;
+}
+
+/** Interface for PR display with exercise name */
+interface PRDisplayItem extends PREvent {
+  exerciseName: string;
 }
 
 @Component({
@@ -37,6 +42,9 @@ export class InsightsPage implements OnInit, ViewWillEnter {
   /** Per-week breakdown (current week first) */
   weeklyBreakdown: WeeklyBreakdown[] = [];
 
+  /** Recent PRs with exercise names */
+  recentPRs: PRDisplayItem[] = [];
+
   constructor(
     private db: DbService,
     private router: Router
@@ -54,18 +62,38 @@ export class InsightsPage implements OnInit, ViewWillEnter {
   }
 
   /**
-   * Load completed sessions from IndexedDB.
+   * Load completed sessions and recent PRs from IndexedDB.
    */
   private async loadSessions(): Promise<void> {
     this.isLoading = true;
     try {
-      this.sessions = await this.db.getCompletedSessions();
+      // Load sessions and PRs in parallel
+      const [sessions, prEvents] = await Promise.all([
+        this.db.getCompletedSessions(),
+        this.db.getRecentPREvents(10)
+      ]);
+
+      this.sessions = sessions;
       this.calculateWeeklyInsights();
+
+      // Load exercise names for PRs
+      if (prEvents.length > 0) {
+        const exerciseIds = [...new Set(prEvents.map(pr => pr.exerciseId))];
+        const exerciseMap = await this.db.getExercisesByIds(exerciseIds);
+
+        this.recentPRs = prEvents.map(pr => ({
+          ...pr,
+          exerciseName: exerciseMap.get(pr.exerciseId)?.name || 'Unknown Exercise'
+        }));
+      } else {
+        this.recentPRs = [];
+      }
     } catch (error) {
-      console.error('Failed to load sessions:', error);
+      console.error('Failed to load history data:', error);
       this.sessions = [];
       this.sessionsLast4Weeks = 0;
       this.weeklyBreakdown = [];
+      this.recentPRs = [];
     } finally {
       this.isLoading = false;
     }
@@ -151,6 +179,17 @@ export class InsightsPage implements OnInit, ViewWillEnter {
     const date = new Date(isoString);
     return date.toLocaleDateString([], {
       weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  /**
+   * Format short date for display (e.g., "Jan 6").
+   */
+  formatShortDate(isoString: string): string {
+    const date = new Date(isoString);
+    return date.toLocaleDateString([], {
       month: 'short',
       day: 'numeric'
     });

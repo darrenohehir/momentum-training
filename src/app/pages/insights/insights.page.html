@@ -32,13 +32,28 @@
           </ion-card-content>
         </ion-card>
 
-        <!-- Recent PRs card (placeholder for Task 7.4) -->
-        <ion-card class="insight-card">
+        <!-- Recent PRs summary card -->
+        <ion-card class="insight-card prs-card">
           <ion-card-content>
-            <div class="insight-label">Recent top weights</div>
-            <div class="insight-value">—</div>
+            <div class="insight-label">Top weights</div>
+            <div class="insight-value" *ngIf="recentPRs.length === 0">—</div>
+            <div class="pr-count" *ngIf="recentPRs.length > 0">{{ recentPRs.length }} {{ recentPRs.length === 1 ? 'record' : 'records' }}</div>
           </ion-card-content>
         </ion-card>
+      </div>
+
+      <!-- Recent PRs detail list -->
+      <div class="pr-list-section" *ngIf="recentPRs.length > 0">
+        <h3 class="subsection-title">Recent top weights</h3>
+        <div class="pr-list">
+          <div class="pr-item" *ngFor="let pr of recentPRs">
+            <div class="pr-exercise">{{ pr.exerciseName }}</div>
+            <div class="pr-details">
+              <span class="pr-weight">{{ pr.newMax }} kg</span>
+              <span class="pr-date">{{ formatShortDate(pr.detectedAt) }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
