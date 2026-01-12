@@ -1,4 +1,5 @@
 export const environment = {
   production: true,
-  useHashRouting: false
+  useHashRouting: true
 };
+
