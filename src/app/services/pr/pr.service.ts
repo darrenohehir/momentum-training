@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { PREvent } from '../../models';
 import { DbService } from '../db';
+import { generateUUID } from '../../utils';
 
 /**
  * Service for detecting and managing Personal Records (PRs).
@@ -73,7 +74,7 @@ export class PrService {
       // - currentMax > historicalMax (strictly greater)
       if (currentMax > historicalMax) {
         const prEvent: PREvent = {
-          id: crypto.randomUUID(),
+          id: generateUUID(),
           sessionId,
           exerciseId,
           previousMax: historicalMax,

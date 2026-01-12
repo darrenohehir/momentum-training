@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { DbService } from '../../services/db';
 import { Exercise, ExerciseCategory, EquipmentType } from '../../models';
+import { generateUUID } from '../../utils';
 
 /**
  * View mode for the exercise picker.
@@ -146,7 +147,7 @@ export class ExercisePickerComponent implements OnInit {
 
     const now = new Date().toISOString();
     const newExercise: Exercise = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       name,
       category: this.newExerciseCategory,
       equipmentType: this.newExerciseEquipment,

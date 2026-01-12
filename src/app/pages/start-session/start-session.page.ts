@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { QuestId, Session } from '../../models';
 import { DbService } from '../../services/db';
+import { generateUUID } from '../../utils';
 
 interface QuestOption {
   id: QuestId | null;
@@ -46,7 +47,7 @@ export class StartSessionPage {
     try {
       const now = new Date().toISOString();
       const session: Session = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         startedAt: now,
         createdAt: now,
         updatedAt: now,

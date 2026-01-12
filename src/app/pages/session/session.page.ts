@@ -8,6 +8,7 @@ import { XpService } from '../../services/xp';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
+import { generateUUID } from '../../utils';
 
 /** Map quest IDs to display labels */
 const QUEST_LABELS: Record<QuestId, string> = {
@@ -307,7 +308,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
 
       // Create the SessionExercise record
       const sessionExercise: SessionExercise = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         sessionId: this.session.id,
         exerciseId: exercise.id,
         orderIndex
@@ -490,7 +491,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     try {
       const setIndex = await this.db.getNextSetIndex(item.sessionExercise.id);
       const newSet: Set = {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         sessionExerciseId: item.sessionExercise.id,
         setIndex,
         createdAt: new Date().toISOString()
@@ -709,7 +710,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
 
       // Create new Set records from the ghost sets
       const newSets: Set[] = ghost.sets.map((templateSet, index) => ({
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         sessionExerciseId: item.sessionExercise.id,
         setIndex: index,
         weight: templateSet.weight,
