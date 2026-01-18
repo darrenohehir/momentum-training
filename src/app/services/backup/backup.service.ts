@@ -18,8 +18,9 @@ export interface ImportValidationResult {
  * Import: Validates and restores data from a previously exported JSON file.
  *
  * Safety guarantees:
- * - Import validates data before clearing existing data
- * - Import is all-or-nothing (transaction-based)
+ * - Import validates data BEFORE any database modifications
+ * - Import uses a single Dexie transaction: if any operation fails,
+ *   the transaction aborts and all changes are rolled back
  * - Schema version must match exactly (no auto-migration)
  */
 @Injectable({
@@ -171,6 +172,8 @@ export class BackupService {
 
     // Validate data fields are arrays
     const dataObj = data as Record<string, unknown>;
+
+    // Required fields that must exist and be arrays
     const requiredArrayFields = [
       'exercises',
       'sessions',
@@ -190,6 +193,40 @@ export class BackupService {
       }
     }
 
+    // Optional fields: if present, must be arrays; if missing, will default to []
+    const optionalArrayFields = ['foodEntries'];
+
+    for (const field of optionalArrayFields) {
+      if (field in dataObj && !Array.isArray(dataObj[field])) {
+        return { valid: false, error: `${field} must be an array in backup data.` };
+      }
+    }
+
+    // Lightweight sanity check: verify records have string `id` fields
+    // This catches corrupted or malformed data without full schema validation
+    const fieldsToCheckIds = [
+      'exercises',
+      'sessions',
+      'sessionExercises',
+      'sets',
+      'bodyweightEntries',
+      'prEvents'
+    ];
+
+    for (const field of fieldsToCheckIds) {
+      const arr = dataObj[field] as unknown[];
+      for (let i = 0; i < arr.length; i++) {
+        const record = arr[i];
+        if (!record || typeof record !== 'object') {
+          return { valid: false, error: `Invalid record at ${field}[${i}]: expected object.` };
+        }
+        const rec = record as Record<string, unknown>;
+        if (!('id' in rec) || typeof rec['id'] !== 'string') {
+          return { valid: false, error: `Invalid record at ${field}[${i}]: missing or invalid 'id' field.` };
+        }
+      }
+    }
+
     // All validation passed
     return {
       valid: true,
@@ -201,10 +238,14 @@ export class BackupService {
    * Import data from a validated payload.
    * This replaces ALL existing data with the imported data.
    *
+   * The import is transactional: all operations (clear + add) occur within
+   * a single Dexie transaction. If any operation fails, the transaction
+   * aborts and all changes are rolled back automatically.
+   *
    * IMPORTANT: Call validateImportPayload() first and confirm with user.
    *
    * @param payload - A validated ExportPayload
-   * @throws Error if import fails
+   * @throws Error if import fails (transaction will have been rolled back)
    */
   async importFromPayload(payload: ExportPayload): Promise<void> {
     // Ensure data object exists with default empty arrays for missing fields

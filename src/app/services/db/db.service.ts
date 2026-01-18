@@ -776,11 +776,13 @@ export class DbService extends Dexie {
 
   /**
    * Import all data from a backup.
-   * This is an all-or-nothing operation using a single transaction.
+   * This is an all-or-nothing operation using a single Dexie transaction.
    * Clears all existing data before importing.
    *
+   * On error, the transaction aborts and all changes are rolled back automatically.
+   *
    * @param data - The ExportData object containing all entity arrays
-   * @throws Error if import fails (existing data is preserved on failure)
+   * @throws Error if import fails (transaction aborts, changes rolled back)
    */
   async importAllData(data: ExportData): Promise<void> {
     await this.transaction(

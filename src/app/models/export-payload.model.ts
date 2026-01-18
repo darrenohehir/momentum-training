@@ -31,7 +31,7 @@ export interface ExportData {
   /** PR events */
   prEvents: PREvent[];
   /** Food entries (placeholder for future use; always [] until implemented) */
-  foodEntries: never[];
+  foodEntries: unknown[];
 }
 
 /**

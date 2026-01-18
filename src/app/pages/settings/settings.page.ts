@@ -3,6 +3,9 @@ import { AlertController } from '@ionic/angular';
 import { BackupService, ImportValidationResult } from '../../services/backup';
 import { ExportPayload } from '../../models';
 
+/** Maximum file size for import (20 MB) */
+const MAX_IMPORT_FILE_SIZE = 20 * 1024 * 1024;
+
 @Component({
   selector: 'app-settings',
   templateUrl: './settings.page.html',
@@ -87,6 +90,13 @@ export class SettingsPage {
   private async processImportFile(file: File): Promise<void> {
     this.clearStatus();
 
+    // Step 0: Check file size to avoid freezing on very large files
+    if (file.size > MAX_IMPORT_FILE_SIZE) {
+      const maxMB = MAX_IMPORT_FILE_SIZE / (1024 * 1024);
+      this.showStatus(`File is too large. Maximum size is ${maxMB} MB.`, true);
+      return;
+    }
+
     // Step 1: Read and parse the file
     let parsed: unknown;
     try {
@@ -120,15 +130,8 @@ export class SettingsPage {
 
     const alert = await this.alertController.create({
       header: 'Import Backup',
-      message: `
-        <p>This will replace all current data with the backup from <strong>${exportDate}</strong>.</p>
-        <p style="margin-top: 12px; font-size: 0.9em; opacity: 0.8;">
-          ${summary.counts.sessions} sessions, 
-          ${summary.counts.exercises} exercises, 
-          ${summary.counts.sets} sets
-        </p>
-        <p style="margin-top: 12px;"><strong>This cannot be undone.</strong></p>
-      `,
+      subHeader: `Backup from ${exportDate}`,
+      message: `This will replace all current data with ${summary.counts.sessions} sessions, ${summary.counts.exercises} exercises, and ${summary.counts.sets} sets. This cannot be undone.`,
       buttons: [
         {
           text: 'Cancel',
@@ -164,7 +167,8 @@ export class SettingsPage {
       }, 1500);
     } catch (error) {
       console.error('Import failed:', error);
-      this.showStatus('Import failed. Your existing data was preserved.', true);
+      // Transaction aborted - changes rolled back automatically
+      this.showStatus('Import failed. Changes were rolled back.', true);
       this.isImporting = false;
     }
   }
