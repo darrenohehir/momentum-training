@@ -33,14 +33,14 @@ export class TabsPage {
           text: 'Log bodyweight',
           icon: 'scale-outline',
           handler: () => {
-            this.router.navigate(['/bodyweight']);
+            this.router.navigate(['/bodyweight'], { queryParams: { new: '1' } });
           }
         },
         {
           text: 'Log food',
           icon: 'restaurant-outline',
           handler: () => {
-            this.router.navigate(['/food']);
+            this.router.navigate(['/food'], { queryParams: { new: '1' } });
           }
         },
         {

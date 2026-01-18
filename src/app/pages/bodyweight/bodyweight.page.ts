@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
@@ -47,6 +48,8 @@ export class BodyweightPage implements OnInit, OnDestroy, ViewWillEnter {
   private destroy$ = new Subject<void>();
 
   constructor(
+    private route: ActivatedRoute,
+    private router: Router,
     private db: DbService,
     private undoToast: UndoToastService
   ) {}
@@ -69,9 +72,23 @@ export class BodyweightPage implements OnInit, OnDestroy, ViewWillEnter {
 
   /**
    * Ionic lifecycle hook: reload data when page becomes active.
+   * Checks for ?new=1 query param to open create mode directly (from FAB).
    */
   async ionViewWillEnter(): Promise<void> {
     await this.loadEntries();
+
+    // Check for ?new=1 query param (from FAB quick-add)
+    const newParam = this.route.snapshot.queryParamMap.get('new');
+    if (newParam === '1') {
+      // Clear the query param to avoid re-triggering on back/refresh
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: true
+      });
+      // Enter create mode
+      this.startNewEntry();
+    }
   }
 
   /**
