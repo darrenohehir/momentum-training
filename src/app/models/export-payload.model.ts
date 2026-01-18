@@ -12,13 +12,10 @@ import { PREvent } from './pr-event.model';
 export const SCHEMA_VERSION = 2;
 
 /**
- * Complete data export payload for backup/restore.
+ * Data container within ExportPayload.
+ * Each field is an array of the respective entity type.
  */
-export interface ExportPayload {
-  /** Schema version for migration compatibility */
-  schemaVersion: number;
-  /** ISO 8601 timestamp when export was created */
-  exportedAt: string;
+export interface ExportData {
   /** All exercises */
   exercises: Exercise[];
   /** All sessions */
@@ -29,9 +26,23 @@ export interface ExportPayload {
   sets: Set[];
   /** All bodyweight entries */
   bodyweightEntries: BodyweightEntry[];
-  /** Gamification state */
-  gamificationState: GamificationState;
-  /** PR events (added in schema v2) */
+  /** Gamification state records (with id field) */
+  gamificationState: (GamificationState & { id: string })[];
+  /** PR events */
   prEvents: PREvent[];
+  /** Food entries (placeholder for future use; always [] until implemented) */
+  foodEntries: never[];
+}
+
+/**
+ * Complete data export payload for backup/restore.
+ */
+export interface ExportPayload {
+  /** Schema version for migration compatibility */
+  schemaVersion: number;
+  /** ISO 8601 timestamp when export was created */
+  exportedAt: string;
+  /** All entity data */
+  data: ExportData;
 }
 

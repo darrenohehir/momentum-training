@@ -8,7 +8,8 @@ import {
   BodyweightEntry,
   GamificationState,
   PREvent,
-  SCHEMA_VERSION
+  SCHEMA_VERSION,
+  ExportData
 } from '../../models';
 
 /**
@@ -142,6 +143,8 @@ export class DbService extends Dexie {
   /**
    * Clear all data from all stores.
    * Use with caution - primarily for import/reset functionality.
+   * Includes all stores: exercises, sessions, sessionExercises, sets,
+   * bodyweightEntries, gamificationState, and prEvents.
    */
   async clearAllStores(): Promise<void> {
     await this.transaction(
@@ -152,7 +155,8 @@ export class DbService extends Dexie {
         this.sessionExercises,
         this.sets,
         this.bodyweightEntries,
-        this.gamificationState
+        this.gamificationState,
+        this.prEvents
       ],
       async () => {
         await Promise.all([
@@ -161,7 +165,8 @@ export class DbService extends Dexie {
           this.sessionExercises.clear(),
           this.sets.clear(),
           this.bodyweightEntries.clear(),
-          this.gamificationState.clear()
+          this.gamificationState.clear(),
+          this.prEvents.clear()
         ]);
       }
     );
@@ -728,5 +733,107 @@ export class DbService extends Dexie {
 
     // Filter to sets with valid weights (not null/undefined and > 0)
     return sets.filter(s => s.weight !== undefined && s.weight !== null && s.weight > 0);
+  }
+
+  // ============================================
+  // Export / Import (Backup)
+  // ============================================
+
+  /**
+   * Get all data from all stores for export.
+   * Used for generating backup JSON.
+   */
+  async getAllDataForExport(): Promise<ExportData> {
+    const [
+      exercises,
+      sessions,
+      sessionExercises,
+      sets,
+      bodyweightEntries,
+      gamificationState,
+      prEvents
+    ] = await Promise.all([
+      this.exercises.toArray(),
+      this.sessions.toArray(),
+      this.sessionExercises.toArray(),
+      this.sets.toArray(),
+      this.bodyweightEntries.toArray(),
+      this.gamificationState.toArray(),
+      this.prEvents.toArray()
+    ]);
+
+    return {
+      exercises,
+      sessions,
+      sessionExercises,
+      sets,
+      bodyweightEntries,
+      gamificationState,
+      prEvents,
+      foodEntries: [] // Placeholder for future food logging
+    };
+  }
+
+  /**
+   * Import all data from a backup.
+   * This is an all-or-nothing operation using a single transaction.
+   * Clears all existing data before importing.
+   *
+   * @param data - The ExportData object containing all entity arrays
+   * @throws Error if import fails (existing data is preserved on failure)
+   */
+  async importAllData(data: ExportData): Promise<void> {
+    await this.transaction(
+      'rw',
+      [
+        this.exercises,
+        this.sessions,
+        this.sessionExercises,
+        this.sets,
+        this.bodyweightEntries,
+        this.gamificationState,
+        this.prEvents
+      ],
+      async () => {
+        // Step 1: Clear all stores
+        await Promise.all([
+          this.exercises.clear(),
+          this.sessions.clear(),
+          this.sessionExercises.clear(),
+          this.sets.clear(),
+          this.bodyweightEntries.clear(),
+          this.gamificationState.clear(),
+          this.prEvents.clear()
+        ]);
+
+        // Step 2: Bulk add all data
+        // Use bulkAdd for better performance with large datasets
+        const addPromises: Promise<unknown>[] = [];
+
+        if (data.exercises.length > 0) {
+          addPromises.push(this.exercises.bulkAdd(data.exercises));
+        }
+        if (data.sessions.length > 0) {
+          addPromises.push(this.sessions.bulkAdd(data.sessions));
+        }
+        if (data.sessionExercises.length > 0) {
+          addPromises.push(this.sessionExercises.bulkAdd(data.sessionExercises));
+        }
+        if (data.sets.length > 0) {
+          addPromises.push(this.sets.bulkAdd(data.sets));
+        }
+        if (data.bodyweightEntries.length > 0) {
+          addPromises.push(this.bodyweightEntries.bulkAdd(data.bodyweightEntries));
+        }
+        if (data.gamificationState.length > 0) {
+          addPromises.push(this.gamificationState.bulkAdd(data.gamificationState));
+        }
+        if (data.prEvents.length > 0) {
+          addPromises.push(this.prEvents.bulkAdd(data.prEvents));
+        }
+
+        await Promise.all(addPromises);
+      }
+    );
   }
 }

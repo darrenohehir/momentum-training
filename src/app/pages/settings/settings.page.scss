@@ -1,4 +1,76 @@
 /* Settings page styles */
 
+.section {
+  margin-bottom: 32px;
+}
 
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--ion-text-color);
+}
 
+.section-description {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.backup-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  ion-button {
+    --border-radius: 8px;
+    margin: 0;
+  }
+}
+
+.status-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+
+  ion-icon {
+    flex-shrink: 0;
+    font-size: 1.2rem;
+  }
+
+  &.success {
+    background: rgba(var(--ion-color-success-rgb), 0.1);
+    color: var(--ion-color-success);
+  }
+
+  &.error {
+    background: rgba(var(--ion-color-danger-rgb), 0.1);
+    color: var(--ion-color-danger);
+  }
+}
+
+ion-list {
+  background: transparent;
+  padding: 0;
+}
+
+ion-item {
+  --background: var(--ion-color-step-100);
+  --border-radius: 8px;
+  margin-bottom: 8px;
+
+  p {
+    margin: 0;
+  }
+
+  .secondary-text {
+    opacity: 0.6;
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+}

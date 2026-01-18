@@ -5,8 +5,67 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <p>Settings placeholder</p>
+  <!-- Backup Section -->
+  <div class="section">
+    <h2 class="section-title">Backup</h2>
+    <p class="section-description">
+      Export your data to keep a local backup. Import to restore from a previous backup.
+    </p>
+
+    <div class="backup-actions">
+      <ion-button
+        expand="block"
+        fill="outline"
+        (click)="exportBackup()"
+        [disabled]="isExporting || isImporting"
+      >
+        <ion-icon slot="start" name="download-outline"></ion-icon>
+        {{ isExporting ? 'Exporting...' : 'Export Backup' }}
+      </ion-button>
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        color="medium"
+        (click)="selectImportFile()"
+        [disabled]="isExporting || isImporting"
+      >
+        <ion-icon slot="start" name="cloud-upload-outline"></ion-icon>
+        {{ isImporting ? 'Importing...' : 'Import Backup' }}
+      </ion-button>
+
+      <!-- Hidden file input -->
+      <input
+        #fileInput
+        type="file"
+        accept=".json,application/json"
+        style="display: none;"
+        (change)="onFileSelected($event)"
+      />
+    </div>
+
+    <!-- Status message -->
+    <div
+      class="status-message"
+      *ngIf="statusMessage"
+      [class.error]="isError"
+      [class.success]="!isError"
+    >
+      <ion-icon [name]="isError ? 'alert-circle-outline' : 'checkmark-circle-outline'"></ion-icon>
+      <span>{{ statusMessage }}</span>
+    </div>
+  </div>
+
+  <!-- App Info Section -->
+  <div class="section">
+    <h2 class="section-title">About</h2>
+    <ion-list lines="none">
+      <ion-item>
+        <ion-label>
+          <p>Momentum Gym</p>
+          <p class="secondary-text">Offline-first workout logger</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
 </ion-content>
-
-
-
