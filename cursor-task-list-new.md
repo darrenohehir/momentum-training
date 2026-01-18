@@ -130,56 +130,89 @@ This shift has two implications:
 
 ---
 
-## Phase 10B – Home Entry Point Refactor (Multi-Log FAB)
+## Phase 10B – Home + Global FAB Refactor (Multi-Log Creation)
 
-### Task 10B.1 – Replace “Start session” CTA with FAB quick actions
+### Task 10B.1 – Introduce global FAB for logging actions
 
-- Add a single Floating Action Button (FAB) on Home (calm styling)
-- FAB opens quick actions:
+- Add a single Floating Action Button (FAB) that is available across primary app screens
+
+  - Visible on: Home, History, Exercises
+  - Hidden/suppressed during modal logging flows
+
+- FAB opens a footer drawer (or equivalent) with explicit actions:
   - Start session
-  - Log food
   - Log bodyweight
+  - Log food
 
 **Guardrails**
 
-- Home remains lightweight (avoid stacking insights here)
-- No “you should log…” prompts
-- No metrics dominating Home
-
-### Task 10B.2 – Navigation consistency
-
-- Ensure each quick action lands on the right screen reliably
-- Ensure back navigation is predictable
-- Ensure “log now” defaults date/time to current moment
+- FAB is for creation only (never navigation)
+- No XP or rewards are granted for opening the FAB
+- FAB styling should be calm and functional (not dominant or celebratory)
 
 ---
 
-## Phase 11A – Calendar View (Engagement Surface, Not a Scoreboard)
+### Task 10B.2 – Reframe Home as status / motivation surface
 
-### Task 11A.1 – Calendar foundation (month grid)
+- Remove primary “Start session” CTA from Home
+- Home focuses on:
+  - Momentum status
+  - XP / level (secondary emphasis)
+  - Recent activity or shortcuts to log history
 
-- Add a new “Calendar” tab (or within Insights if you prefer, but should be primary)
-- Show month grid with day cells
-- Each day indicates presence of:
+**Guardrails**
+
+- Home must not pressure users to log
+- No “you should log…” prompts
+- No performance summaries or evaluative language
+- Creation always happens via the global FAB
+
+---
+
+### Task 10B.3 – Navigation reliability
+
+- Ensure each FAB action:
+  - Lands on the correct logging flow
+  - Defaults date/time to “now”
+  - Returns users to a predictable screen on completion
+- Back navigation must be consistent and unsurprising
+
+---
+
+## Phase 11A – History Calendar Visualisation (Unified, Non-Evaluative)
+
+### Task 11A.1 – Add calendar visualisation to History
+
+- Add a month-based calendar section at the top of the History screen
+- Calendar is a visualisation mode within History (not a standalone tab)
+
+- Each day may indicate presence of:
   - Workout session(s)
   - Bodyweight log(s)
   - Food log(s)
 
 **Display approach (MVP)**
 
-- Use small neutral markers (dots/badges) per type
-- Avoid numbers in cells initially (prevents scoreboard energy)
+- Use small, neutral markers (dots or icons) per log type
+- Do not show numbers in calendar cells
 
 **Guardrails**
 
+- Calendar is informational, not motivational
 - No streak visuals
 - No “missed day” styling
-- No heatmap intensity (avoid GitHub-contribution vibe for now)
-- Calendar queries must be bounded by date range (e.g., month start/end) and should not scan all logs.
+- No heatmap intensity or colour scaling
+- Calendar queries must be bounded by visible date range (e.g. month start/end)
 
-### Task 11A.2 – Day detail drawer/screen
+---
 
-- Tap a day → show a simple list of entries for that day:
+### Task 11A.2 – Day detail interaction
+
+- Tapping a day focuses History on that day
+
+  - Either via inline list filtering or a lightweight drawer/screen
+
+- Show a simple list of entries for that day:
   - Sessions (tap to open summary)
   - Bodyweight entries (tap to open)
   - Food entries (tap to open)
@@ -188,33 +221,45 @@ This shift has two implications:
 
 - This is a timeline, not an evaluation
 - Keep language factual (“Logged”, “Recorded”)
+- No comparative or trend language
 
 ---
 
-## Phase 11B – Calendar Filtering (Tabs or Toggle)
+## Phase 11B – History Filtering (Unified Log Types)
 
-### Task 11B.1 – Calendar filter control
+### Task 11B.1 – History filter control
 
-Implement one of these (choose simplest to maintain):
+- Add a filter control that applies to both:
+  - Calendar markers
+  - Log list below
 
-**Option A (recommended):** Single calendar + filter chips/toggles
+**Filter options**
 
-- All / Sessions / Food / Bodyweight
-
-**Option B:** Segmented tabs
-
-- Sessions | Food | Bodyweight
+- All (default)
+- Sessions
+- Bodyweight
+- Food
 
 **Guardrails**
 
-- Default should be “All” so calendar feels unified
-- Filters are convenience, not separate worlds
+- “All” must be the default to preserve a unified timeline
+- Filters are convenience views, not separate modes
+- Switching filters should feel fast and lightweight
 
-### Task 11B.2 – Minimal counts (optional)
+---
 
-- In day detail view only (not the grid):
-  - Show counts like “2 sessions” / “1 food entry”
-- Keep counts out of the grid to avoid gamification drift
+### Task 11B.2 – Optional minimal counts (day detail only)
+
+- In day-focused views only (not the calendar grid):
+  - Show counts such as:
+    - “2 sessions”
+    - “1 bodyweight entry”
+    - “3 food entries”
+
+**Guardrails**
+
+- Counts must never appear in the calendar grid
+- Avoid visual emphasis that suggests scoring or achievement
 
 ---
 

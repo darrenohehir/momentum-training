@@ -1,183 +1,363 @@
-# Project: Momentum Gym (Offline-first gamified workout logger)
+# Project: Momentum Gym
 
-Build an offline-first workout logging app for a single user (MVP) using Ionic + Angular, PWA support, IndexedDB persistence, and JSON export/import backup. The app is gamified via “Momentum” (rolling window), XP/Levels (evidence of effort), PR highlights, and “Previous You” ghost comparisons. No social features.
+(Offline-first personal fitness logger: sessions, bodyweight, food)
+
+Build an offline-first personal fitness logging app for a single user (MVP) using Ionic + Angular, PWA support, IndexedDB persistence, and JSON export/import backup.
+
+The app supports **multiple log types** (Workout Sessions, Bodyweight, Food) and is lightly gamified via:
+
+- Momentum (rolling window, session-based)
+- XP / Levels (evidence of effort)
+- PR highlights
+- “Previous You” comparisons
+
+No social features. No coaching. No judgement.
+
+---
+
+## Product framing (critical)
+
+This is **not** a coaching app, calorie police, or streak machine.
+
+- Logging is neutral and voluntary
+- Gamification is informational, not motivational pressure
+- History is a timeline, not a scoreboard
+- Home is status-oriented, not action-pushy
+
+Avoid assumptions that:
+
+- workouts are the only meaningful activity
+- logging food/bodyweight should earn XP
+- calendars imply streaks or missed days
+
+---
 
 ## Non-negotiable product goals
 
-1. Fast set logging on phone at the gym (minimal friction).
-2. Offline-first: fully usable without internet, data persists locally via IndexedDB.
-3. Backup in MVP: Export/Import JSON in Settings.
-4. Gamification is intentional and low-noise (session-end feedback, no guilt language).
-5. Responsive: works well on iPhone and MacBook.
+1. Fast logging on phone (low friction, minimal taps).
+2. Offline-first: fully usable without internet.
+3. Local persistence via IndexedDB.
+4. Backup in MVP: Export / Import JSON in Settings.
+5. Gamification is low-noise and intentional (session-end feedback only).
+6. Responsive: works well on iPhone and desktop PWA.
+
+---
+
+## Core information architecture (lock this in)
+
+### Primary navigation (bottom tab bar)
+
+- Home
+- History
+- FAB (Create / Log actions – not navigation)
+- Exercises
+- Settings
+
+### Screen responsibilities
+
+**Home**
+
+- Status and motivation surface
+- Shows momentum, XP/level (secondary), recent activity
+- Does NOT initiate logging directly
+
+**History**
+
+- Unified timeline for all log types
+- Contains calendar visualisation + log list
+- Supports filtering (All / Sessions / Bodyweight / Food)
+
+**FAB**
+
+- Global create control (available across main tabs)
+- Opens explicit actions:
+  - Start session
+  - Log bodyweight
+  - Log food
+
+**Exercises**
+
+- Exercise library (seeded + user-created)
+- May later support saved sessions / quests (future)
+
+**Settings**
+
+- Import / export
+- App configuration (minimal in MVP)
+
+---
 
 ## MVP scope (must build)
 
-### Core flows
+### Logging flows
 
-- Home dashboard:
-  - Primary CTA: “Start session”
-  - Momentum status (Active/Paused) based on rolling 7-day rule
-  - “Days remaining” until momentum expires
-  - Quick view: last 5 sessions
-  - XP + Level summary (small, not noisy)
+#### Workout session
+
 - Start session:
-  - Choose a Quest (template label) from preset list:
-    - Quick Session (blank)
-    - Full Body (preset)
+
+  - Optional Quest label (template-style, non-binding):
+    - Quick Session (default)
+    - Full Body
     - Upper
     - Lower
-  - User can proceed without selecting (defaults to Quick Session)
+
 - Session in progress:
-  - Add exercises (select from library or create new)
+
+  - Add exercises (library or create new)
   - Reorder exercises
   - For each exercise:
-    - Show “Last attempt” summary (last date + last sets)
-    - “Copy last attempt” button to prefill sets
-    - Set table with quick entry:
-      - weight, reps, optional RPE toggle (hidden by default)
-      - add set, remove set
-  - Finish session:
-    - Summary screen with XP earned and Highlights (PRs detected)
-- Exercise library:
-  - List + search
-  - Add exercise (name, category, equipmentType, optional notes)
-- Insights (MVP minimal):
-  - Workouts per week (rolling 4 weeks)
-  - Momentum status
-  - PR highlights log (can be derived per session or computed)
-  - Per-exercise trend (at least show last attempts; graphs can be Phase 2)
-- Bodyweight log:
-  - Add entry (date, weightKg, optional note)
-  - Simple history list (graph can be Phase 2)
-- Settings:
-  - Momentum rule is fixed at 7 days in MVP UI (configurable later)
-  - Export JSON (download file)
-  - Import JSON (upload file; simplest: replace all local data after confirmation)
+    - Show “Last attempt” summary (date + sets)
+    - Optional “Copy last attempt” action
+    - Set table:
+      - weight, reps
+      - optional RPE toggle (hidden by default)
+      - add/remove sets
 
-### Gamification rules (MVP)
+- Finish session:
+  - Summary screen
+  - XP earned
+  - PR highlights (if any)
 
-- Momentum (rolling window):
-  - Active if a Session exists within the last 7 days
-  - Paused otherwise
-  - Show “Days remaining” (0–7)
-  - NO streak shields in MVP (but keep logic extensible)
-- XP:
-  - +100 XP on session completion
-  - +5 XP per set logged (count sets saved in session)
-  - +50 XP per PR detected in that session (cap PR bonus to 3/session)
-  - Show XP only at session end (avoid spam)
-- Levels:
-  - Level = floor(totalXp / 1000) + 1
-- PR detection (MVP):
-  - Per exercise: “Top Weight PR” if any set weight exceeds historical max
-  - Keep PR announcements factual (no cringe)
-- Ghost mode:
-  - Always show “Last attempt” for an exercise in session
-  - Provide “Copy last attempt” to prefill sets
+#### Bodyweight log
 
-### Copy + tone requirements
+- Add entry:
 
-- Use neutral language:
-  - “Session” not “Workout”
-  - “Momentum” not “Streak”
-  - “Paused” not “Broken”
-  - “Last attempt” not “Last workout”
-- No guilt phrasing (“failed”, “lost”, “broke your streak”).
-- Feedback is session-end oriented.
+  - date (defaults to today)
+  - weightKg
+  - optional note
+
+- Visible in:
+  - History timeline
+  - History calendar markers
+
+(No graphs in MVP.)
+
+#### Food log
+
+- Add entry:
+
+  - date/time (defaults to now)
+  - calories (number)
+  - optional note
+
+- Treated as a factual log only
+- No macro breakdown in MVP
+- No XP by default
+
+---
+
+### Home (status surface)
+
+Home may show:
+
+- Momentum status (Active / Paused)
+- XP + Level (secondary emphasis)
+- Recent activity (last few logs)
+- Optional shortcuts to History views
+
+Home must NOT:
+
+- Contain “Start session” or “Log now” CTAs
+- Show missed days
+- Show trends or evaluations
+
+All creation happens via the global FAB.
+
+---
+
+### History (timeline + calendar)
+
+- Default view: All log types
+- Filter options:
+  - All
+  - Sessions
+  - Bodyweight
+  - Food
+
+#### Calendar visualisation (inside History)
+
+- Month grid at top of History
+- Each day may show neutral markers for:
+  - Session(s)
+  - Bodyweight entry
+  - Food entry
+
+Calendar rules:
+
+- Informational only
+- No streaks
+- No heatmaps
+- No “missed” styling
+- No counts in grid cells
+
+#### Day focus
+
+- Tap a day to focus History on that date
+- Show list of logs for that day
+- Logs are factual (“Logged”, “Recorded”)
+
+---
+
+## Gamification rules (MVP)
+
+### Momentum
+
+- Defined by workout sessions only
+- Active if a Session exists within the last 7 days
+- Paused otherwise
+- Show “Days remaining” (0–7)
+- No streak shields in MVP
+
+### XP
+
+- +100 XP on session completion
+- +5 XP per set logged
+- +50 XP per PR detected
+- Cap PR bonus at 3 per session
+- XP is shown only at session end
+
+No XP for:
+
+- Bodyweight logs
+- Food logs
+- Opening the FAB
+
+### Levels
+
+- Level = floor(totalXp / 1000) + 1
+
+### PR detection
+
+- Per exercise:
+  - “Top Weight PR” if any set exceeds historical max
+- Keep language factual and restrained
+
+### Previous You (Ghost)
+
+- Always show “Last attempt” for an exercise
+- Copying last attempt creates new editable sets
+
+---
+
+## Copy + tone requirements
+
+- Neutral, factual language only:
+
+  - “Session” (not “Workout”)
+  - “Momentum” (not “Streak”)
+  - “Paused” (not “Broken”)
+  - “Last attempt” (not “Last workout”)
+
+- No guilt or failure framing
+- No celebratory excess
+- Feedback happens at natural boundaries (e.g. session end)
+
+---
 
 ## Out of scope (explicitly not MVP)
 
 - Authentication
 - Cross-device sync
-- Social leaderboards
-- Custom quest builder
-- Streak shields
-- Advanced charts, estimated 1RM, complex PR types
+- Social features
 - Push notifications
-- App Store packaging (Capacitor can be considered later)
+- Coaching, targets, or recommendations
+- Streak shields
+- Advanced charts or analytics
+- App Store packaging
+
+---
 
 ## Technical requirements
 
 ### Stack
 
 - Ionic + Angular
-- PWA enabled (service worker) for offline use
-- IndexedDB for persistence
-  - Use Dexie for IndexedDB. Implement a DbService that encapsulates Dexie and exposes CRUD/query methods.
-- Strong typing for models (TypeScript interfaces)
-- Simple state management (Angular services; avoid overengineering)
+- PWA enabled
+- IndexedDB via Dexie
+- Strong typing (TypeScript interfaces)
+- Simple Angular services for state
 
-### Data model (IndexedDB stores)
+---
 
-Implement the following entity stores:
+## Data model (IndexedDB)
+
+Stores:
 
 - Exercise { id, name, category, equipmentType, notes?, createdAt, updatedAt }
 - Session { id, startedAt, endedAt, questId?, notes?, createdAt, updatedAt }
 - SessionExercise { id, sessionId, exerciseId, orderIndex, notes? }
 - Set { id, sessionExerciseId, setIndex, weight?, reps?, rpe?, isWarmup?, createdAt }
 - BodyweightEntry { id, date, weightKg, note?, createdAt }
-- GamificationState { totalXp } (or compute XP; MVP can store totalXp for simplicity)
-  All exports must include schemaVersion + exportedAt.
+- FoodEntry { id, loggedAt, calories, note?, createdAt }
+- GamificationState { totalXp }
 
-### Conventions
+All exports include:
 
-- IDs: All entities use `id: string` generated as UUID v4 on the client. Use a lightweight UUID generator (e.g. `crypto.randomUUID()` where available; provide a small fallback if needed).
-- Dates: Store all timestamps as ISO 8601 strings (`new Date().toISOString()`), not `Date` objects. For `BodyweightEntry.date`, store as an ISO date string `YYYY-MM-DD` (local day), separate from `createdAt`.
-- Units: Store all load values in kilograms (`weightKg: number`). Bodyweight also stored as `weightKg`. Display `kg` in the UI.
+- schemaVersion
+- exportedAt
 
-### Export/Import
+---
+
+## Conventions
+
+- IDs: UUID v4 (client-side)
+- Dates:
+  - Timestamps as ISO 8601 strings
+  - BodyweightEntry.date stored as `YYYY-MM-DD`
+- Units:
+  - All weights in kilograms
+
+---
+
+## Export / Import
 
 - Export:
-  - Create a JSON file containing all stores, plus schemaVersion and exportedAt.
+
+  - Single JSON file containing all stores
+
 - Import:
   - Validate schemaVersion
-  - MVP simplest behavior: replace all local data with imported data after confirmation
-  - Ensure import does not crash if optional fields missing (provide defaults)
+  - Replace all local data after confirmation
+  - Provide defaults for missing optional fields
 
-### Computed logic
+---
 
-- Momentum:
-  - Determine last session date and compare to now (rolling 7-day window)
-- Last attempt per exercise:
-  - Query most recent SessionExercise for that exerciseId and load its Sets
-- PR detection:
-  - For each exercise in completed session, compare max weight in session vs historical max weight
+## UI direction
 
-### UI direction
+- Dark “instrument panel” aesthetic
+- Near-black background
+- Soft off-white text
+- Single restrained accent colour
+- Minimal motion, no celebratory animations
+- Typography:
+  - Inter (UI)
+  - Optional mono for numbers
 
-- Visual style: dark “instrument panel” system UI
-- Background: near-black / charcoal
-- Text: soft off-white, avoid pure white
-- Accent: single restrained colour (blue/amber/green), used sparingly for primary actions + key state indicators
-- Layout: clean hierarchy, generous spacing, minimal decoration
-- Motion: subtle state transitions only; no confetti / fireworks / loud celebratory animations
-- Typography: Inter (UI), optional mono for numbers (IBM Plex Mono)
+---
 
-### UI implementation rules (Ionic)
+## UI implementation rules (Ionic)
 
-- Use Ionic components as the primary UI building blocks (ion-header, ion-toolbar, ion-content, ion-card, ion-list, ion-item, ion-button, ion-input, ion-modal, ion-alert).
-- Do NOT add Bootstrap or Tailwind for MVP.
-- Implement the design system using Ionic theming:
-  - Define colours and typography via CSS variables in `src/theme/variables.scss`.
-  - Add small global utility classes and overrides in `src/global.scss` (or `src/theme/global.scss` depending on project structure).
-- Prefer styling via Ionic CSS variables and component parts (`::part`) where needed; avoid fragile deep selectors.
-- Create only a small number of custom components for specialised UI (e.g., set logging rows); keep the rest as Ionic defaults themed to match DESIGN.md.
+- Use Ionic components as primary building blocks
+- Do NOT add Bootstrap or Tailwind
+- Theme via CSS variables in `variables.scss`
+- Minimal global utilities only
+- Prefer Ionic CSS variables and `::part`
+- Keep custom components limited and purposeful
 
-## Deliverables
-
-1. Working Ionic Angular app with the above MVP flows.
-2. IndexedDB persistence with stable schemas and versioning.
-3. PWA offline capability.
-4. Export/Import backup in Settings.
-5. Clean UI tuned for fast set logging on mobile.
+---
 
 ## Implementation guidance
 
-- Start with models + DB service + seed data.
-- Build Home -> Start Session -> Session In Progress -> Finish flow first.
-- Then add Exercise library + last attempt + copy last attempt.
-- Then add XP/PR/momentum computation.
-- Then Settings export/import.
-- Then bodyweight log + minimal insights.
+Suggested order:
 
-Ask me (the user) only if a decision blocks implementation. Prefer reasonable defaults.
+1. Models + DB service + seed data
+2. Home + History scaffold (empty states)
+3. Session flow (start → log → finish)
+4. Exercise library + last attempt + copy
+5. XP / PR / Momentum logic
+6. Bodyweight + Food logging
+7. History calendar visualisation
+8. Export / Import
+
+Ask the user only when a decision blocks implementation.  
+Prefer reasonable defaults over speculation.
