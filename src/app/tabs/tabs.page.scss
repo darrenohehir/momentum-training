@@ -1,4 +1,31 @@
 /* Tabs page styles */
 
+/**
+ * Tab bar spacer: Creates space in the center of the tab bar
+ * for the FAB to sit visually without blocking real tab buttons.
+ */
+.tab-bar-spacer {
+  // Match the width of a tab button to maintain even spacing
+  flex: 1;
+  max-width: 72px;
+  // Ensure it's completely non-interactive
+  pointer-events: none;
+  user-select: none;
+}
 
-
+/**
+ * Global FAB: Positioned bottom-center, overlapping the tab bar.
+ * The FAB sits half above / half overlapping the tab bar visually.
+ */
+.global-fab {
+  // Position above the tab bar (Ionic tab bar is ~56px)
+  // Move up so FAB overlaps the tab bar
+  bottom: 28px;
+  
+  ion-fab-button {
+    // Standard size, primary color (default Ionic styling)
+    --background: var(--ion-color-primary);
+    --background-activated: var(--ion-color-primary-shade);
+    --color: var(--ion-color-primary-contrast);
+  }
+}

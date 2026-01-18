@@ -10,6 +10,9 @@
       <ion-label>Exercises</ion-label>
     </ion-tab-button>
 
+    <!-- Center spacer for FAB positioning (non-interactive) -->
+    <div class="tab-bar-spacer"></div>
+
     <ion-tab-button tab="history">
       <ion-icon name="time-outline"></ion-icon>
       <ion-label>History</ion-label>
@@ -20,5 +23,11 @@
       <ion-label>Settings</ion-label>
     </ion-tab-button>
   </ion-tab-bar>
-</ion-tabs>
 
+  <!-- Global FAB: Quick-add actions -->
+  <ion-fab class="global-fab" vertical="bottom" horizontal="center">
+    <ion-fab-button (click)="openQuickAdd()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-tabs>

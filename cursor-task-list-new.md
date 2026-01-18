@@ -152,30 +152,116 @@ This shift has two implications:
 
 ---
 
-### Task 10B.2 – Reframe Home as status / motivation surface
+### Implement Phase 10B.2 – Make FAB actions land in direct create flows for Bodyweight and Food (no IA refactor).
+
+Current:
+
+- FAB action sheet routes “Log bodyweight” -> /bodyweight (list)
+- “Log food” -> /food (list)
+
+Goal:
+
+- FAB actions should open the create/editor state immediately (defaults to now).
+- After tapping Done, user returns to the list view (for now).
+
+Approach (decision lock):
+
+- Use query params to trigger create mode:
+  - /bodyweight?new=1
+  - /food?new=1
+- Do NOT create new routes.
+- Do NOT refactor History/Home yet.
+
+Scope:
+
+- `src/app/tabs/tabs.page.ts` (update FAB navigation targets)
+- `src/app/pages/bodyweight/bodyweight.page.ts` (+ html if needed)
+- `src/app/pages/food/food.page.ts` (+ html if needed)
+
+Requirements:
+
+1. When page loads with `?new=1`:
+
+- Immediately enter “create new entry” mode (same as pressing the existing +/Add button).
+- Default date/time to now.
+- Clear the query param after entering create mode (optional but preferred to avoid repeated auto-open on back/refresh).
+
+2. Ensure normal navigation still works:
+
+- Visiting /bodyweight without ?new=1 behaves as before.
+- Visiting /food without ?new=1 behaves as before.
+
+3. Done/back behavior:
+
+- “Done” returns to the list state (same page).
+- Back arrow behaves predictably (no surprises).
+
+Guardrails:
+
+- No schema changes.
+- No changes to autosave logic other than what is required to support entering create mode.
+- No copy changes beyond what is required.
+
+Acceptance criteria:
+
+- From any tab, FAB -> “Log bodyweight” opens bodyweight create UI immediately.
+- FAB -> “Log food” opens food create UI immediately.
+- Entries save as before and appear in lists.
+
+### Task 10B.3 – Reframe Home as status / motivation surface
+
+Goal:
+Shift Home away from being an entry point for logging, and toward a calm status overview.
+
+Changes:
 
 - Remove primary “Start session” CTA from Home
 - Home focuses on:
   - Momentum status
   - XP / level (secondary emphasis)
-  - Recent activity or shortcuts to log history
+  - Recent activity and/or shortcuts to log history
 
-**Guardrails**
+Guardrails:
 
 - Home must not pressure users to log
 - No “you should log…” prompts
 - No performance summaries or evaluative language
+- Do NOT add new creation CTAs to Home
 - Creation always happens via the global FAB
+- Do NOT refactor History or Calendar as part of this task
 
 ---
 
-### Task 10B.3 – Navigation reliability
+### Task 10B.4 – Navigation reliability (create flows only)
 
-- Ensure each FAB action:
-  - Lands on the correct logging flow
+Goal:
+Ensure all create flows launched from the global FAB behave consistently and predictably.
+
+Requirements:
+
+- Each FAB action:
+  - Lands directly in a create/logging state (not a list-only view)
   - Defaults date/time to “now”
-  - Returns users to a predictable screen on completion
-- Back navigation must be consistent and unsurprising
+  - Uses existing autosave behaviour
+- After completing a log:
+  - User returns to the same section they were in (e.g. list view for now)
+  - No unexpected redirects to Home or other tabs
+
+Back navigation:
+
+- Back arrow returns users to the previous list/state
+- No loops or dead ends
+- Behaviour must be consistent across:
+  - Start session
+  - Log bodyweight
+  - Log food
+
+Guardrails:
+
+- Do NOT introduce new routes unless strictly necessary
+- Prefer query params or existing mechanisms (e.g. `?new=1`)
+- Do NOT refactor History or Calendar yet
+- No changes to autosave, DB schema, or export/import
 
 ---
 
