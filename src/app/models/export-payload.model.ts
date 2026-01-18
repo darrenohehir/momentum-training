@@ -3,14 +3,15 @@ import { Session } from './session.model';
 import { SessionExercise } from './session-exercise.model';
 import { Set } from './set.model';
 import { BodyweightEntry } from './bodyweight-entry.model';
+import { FoodEntry } from './food-entry.model';
 import { GamificationState } from './gamification-state.model';
 import { PREvent } from './pr-event.model';
 
 /**
  * Current schema version for export/import compatibility.
- * Version 3: Added loggedAt field to bodyweightEntries
+ * Version 4: Added foodEntries table
  */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 /**
  * Data container within ExportPayload.
@@ -31,8 +32,8 @@ export interface ExportData {
   gamificationState: (GamificationState & { id: string })[];
   /** PR events */
   prEvents: PREvent[];
-  /** Food entries (placeholder for future use; always [] until implemented) */
-  foodEntries: unknown[];
+  /** Food entries */
+  foodEntries: FoodEntry[];
 }
 
 /**

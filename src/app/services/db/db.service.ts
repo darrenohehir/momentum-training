@@ -6,6 +6,7 @@ import {
   SessionExercise,
   Set,
   BodyweightEntry,
+  FoodEntry,
   GamificationState,
   PREvent,
   SCHEMA_VERSION,
@@ -46,7 +47,9 @@ export const DB_VERSION = SCHEMA_VERSION;
  * - sessionExercises: Links sessions to exercises with ordering
  * - sets: Individual sets within session exercises
  * - bodyweightEntries: Bodyweight log
+ * - foodEntries: Food log
  * - gamificationState: XP tracking (single record)
+ * - prEvents: Personal record events
  */
 @Injectable({
   providedIn: 'root'
@@ -78,7 +81,7 @@ export class DbService extends Dexie {
 
   /**
    * Bodyweight entries table.
-   * Indexes: id (primary), date (for lookup/sorting)
+   * Indexes: id (primary), date (for grouping), loggedAt (for sorting)
    */
   bodyweightEntries!: Table<BodyweightEntry, string>;
 
@@ -93,6 +96,12 @@ export class DbService extends Dexie {
    * Indexes: id (primary), sessionId (get PRs for session), exerciseId (PR history per exercise)
    */
   prEvents!: Table<PREvent, string>;
+
+  /**
+   * Food entries table.
+   * Indexes: id (primary), date (for lookup/grouping), loggedAt (for sorting)
+   */
+  foodEntries!: Table<FoodEntry, string>;
 
   constructor() {
     super(DB_NAME);
@@ -151,6 +160,18 @@ export class DbService extends Dexie {
         }
       }
     });
+
+    // Version 4: Add foodEntries table
+    this.version(4).stores({
+      exercises: 'id, category, name',
+      sessions: 'id, startedAt, endedAt',
+      sessionExercises: 'id, sessionId, exerciseId, [sessionId+orderIndex]',
+      sets: 'id, sessionExerciseId, [sessionExerciseId+setIndex]',
+      bodyweightEntries: 'id, date, loggedAt',
+      gamificationState: 'id',
+      prEvents: 'id, sessionId, exerciseId',
+      foodEntries: 'id, date, loggedAt' // New table for food logging
+    });
   }
 
   /**
@@ -170,7 +191,7 @@ export class DbService extends Dexie {
    * Clear all data from all stores.
    * Use with caution - primarily for import/reset functionality.
    * Includes all stores: exercises, sessions, sessionExercises, sets,
-   * bodyweightEntries, gamificationState, and prEvents.
+   * bodyweightEntries, foodEntries, gamificationState, and prEvents.
    */
   async clearAllStores(): Promise<void> {
     await this.transaction(
@@ -181,6 +202,7 @@ export class DbService extends Dexie {
         this.sessionExercises,
         this.sets,
         this.bodyweightEntries,
+        this.foodEntries,
         this.gamificationState,
         this.prEvents
       ],
@@ -191,6 +213,7 @@ export class DbService extends Dexie {
           this.sessionExercises.clear(),
           this.sets.clear(),
           this.bodyweightEntries.clear(),
+          this.foodEntries.clear(),
           this.gamificationState.clear(),
           this.prEvents.clear()
         ]);
@@ -817,6 +840,59 @@ export class DbService extends Dexie {
   }
 
   // ============================================
+  // Food entries
+  // ============================================
+
+  /**
+   * Get all food entries, sorted by loggedAt descending (newest first).
+   * Uses Dexie index-based ordering for performance.
+   */
+  async getFoodEntries(): Promise<FoodEntry[]> {
+    return this.foodEntries.orderBy('loggedAt').reverse().toArray();
+  }
+
+  /**
+   * Get a single food entry by id.
+   */
+  async getFoodEntry(id: string): Promise<FoodEntry | undefined> {
+    return this.foodEntries.get(id);
+  }
+
+  /**
+   * Add a new food entry (create only).
+   * Throws if entry with same id already exists.
+   * @returns The id of the created entry
+   */
+  async addFoodEntry(entry: FoodEntry): Promise<string> {
+    await this.foodEntries.add(entry);
+    return entry.id;
+  }
+
+  /**
+   * Update an existing food entry (upsert semantics via Dexie put).
+   * Creates the entry if it doesn't exist, updates if it does.
+   */
+  async updateFoodEntry(entry: FoodEntry): Promise<void> {
+    await this.foodEntries.put(entry);
+  }
+
+  /**
+   * Restore a food entry (idempotent upsert for undo functionality).
+   * Uses put() so it won't fail if the entry already exists.
+   * Preferred over addFoodEntry() for undo operations.
+   */
+  async restoreFoodEntry(entry: FoodEntry): Promise<void> {
+    await this.foodEntries.put(entry);
+  }
+
+  /**
+   * Delete a food entry by id.
+   */
+  async deleteFoodEntry(id: string): Promise<void> {
+    await this.foodEntries.delete(id);
+  }
+
+  // ============================================
   // Export / Import (Backup)
   // ============================================
 
@@ -831,6 +907,7 @@ export class DbService extends Dexie {
       sessionExercises,
       sets,
       bodyweightEntries,
+      foodEntries,
       gamificationState,
       prEvents
     ] = await Promise.all([
@@ -839,6 +916,7 @@ export class DbService extends Dexie {
       this.sessionExercises.toArray(),
       this.sets.toArray(),
       this.bodyweightEntries.toArray(),
+      this.foodEntries.toArray(),
       this.gamificationState.toArray(),
       this.prEvents.toArray()
     ]);
@@ -851,7 +929,7 @@ export class DbService extends Dexie {
       bodyweightEntries,
       gamificationState,
       prEvents,
-      foodEntries: [] // Placeholder for future food logging
+      foodEntries
     };
   }
 
@@ -874,6 +952,7 @@ export class DbService extends Dexie {
         this.sessionExercises,
         this.sets,
         this.bodyweightEntries,
+        this.foodEntries,
         this.gamificationState,
         this.prEvents
       ],
@@ -885,6 +964,7 @@ export class DbService extends Dexie {
           this.sessionExercises.clear(),
           this.sets.clear(),
           this.bodyweightEntries.clear(),
+          this.foodEntries.clear(),
           this.gamificationState.clear(),
           this.prEvents.clear()
         ]);
@@ -907,6 +987,9 @@ export class DbService extends Dexie {
         }
         if (data.bodyweightEntries.length > 0) {
           addPromises.push(this.bodyweightEntries.bulkAdd(data.bodyweightEntries));
+        }
+        if (data.foodEntries.length > 0) {
+          addPromises.push(this.foodEntries.bulkAdd(data.foodEntries));
         }
         if (data.gamificationState.length > 0) {
           addPromises.push(this.gamificationState.bulkAdd(data.gamificationState));

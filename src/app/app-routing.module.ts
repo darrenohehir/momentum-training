@@ -29,6 +29,10 @@ const routes: Routes = [
     path: 'bodyweight',
     loadChildren: () => import('./pages/bodyweight/bodyweight.module').then(m => m.BodyweightPageModule)
   },
+  {
+    path: 'food',
+    loadChildren: () => import('./pages/food/food.module').then(m => m.FoodPageModule)
+  },
   // History detail (read-only session view)
   {
     path: 'history/:id',

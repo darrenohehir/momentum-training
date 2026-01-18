@@ -180,6 +180,7 @@ export class BackupService {
       'sessionExercises',
       'sets',
       'bodyweightEntries',
+      'foodEntries',
       'gamificationState',
       'prEvents'
     ];
@@ -193,15 +194,6 @@ export class BackupService {
       }
     }
 
-    // Optional fields: if present, must be arrays; if missing, will default to []
-    const optionalArrayFields = ['foodEntries'];
-
-    for (const field of optionalArrayFields) {
-      if (field in dataObj && !Array.isArray(dataObj[field])) {
-        return { valid: false, error: `${field} must be an array in backup data.` };
-      }
-    }
-
     // Lightweight sanity check: verify records have string `id` fields
     // This catches corrupted or malformed data without full schema validation
     const fieldsToCheckIds = [
@@ -210,6 +202,7 @@ export class BackupService {
       'sessionExercises',
       'sets',
       'bodyweightEntries',
+      'foodEntries',
       'prEvents'
     ];
 
@@ -255,9 +248,9 @@ export class BackupService {
       sessionExercises: payload.data.sessionExercises || [],
       sets: payload.data.sets || [],
       bodyweightEntries: payload.data.bodyweightEntries || [],
+      foodEntries: payload.data.foodEntries || [],
       gamificationState: payload.data.gamificationState || [],
-      prEvents: payload.data.prEvents || [],
-      foodEntries: [] // Ignored during import; placeholder for future
+      prEvents: payload.data.prEvents || []
     };
 
     await this.db.importAllData(data);
@@ -274,6 +267,7 @@ export class BackupService {
       sessions: number;
       sets: number;
       bodyweightEntries: number;
+      foodEntries: number;
       prEvents: number;
     };
   } {
@@ -284,6 +278,7 @@ export class BackupService {
         sessions: payload.data.sessions?.length || 0,
         sets: payload.data.sets?.length || 0,
         bodyweightEntries: payload.data.bodyweightEntries?.length || 0,
+        foodEntries: payload.data.foodEntries?.length || 0,
         prEvents: payload.data.prEvents?.length || 0
       }
     };

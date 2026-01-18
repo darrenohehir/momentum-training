@@ -1,0 +1,144 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <!-- Back to home when viewing list, back to list when editing -->
+      <ion-back-button 
+        *ngIf="!editingEntry" 
+        defaultHref="/tabs/home">
+      </ion-back-button>
+      <ion-button 
+        *ngIf="editingEntry" 
+        fill="clear" 
+        (click)="cancelEdit()">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ editingEntry ? (isNewEntry ? 'New Entry' : 'Edit Entry') : 'Food Log' }}</ion-title>
+    <ion-buttons slot="end">
+      <!-- Add button (list view only) -->
+      <ion-button 
+        *ngIf="!editingEntry" 
+        (click)="startNewEntry()">
+        <ion-icon name="add-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+      <!-- Delete button (edit view only, existing entries) -->
+      <ion-button 
+        *ngIf="editingEntry && !isNewEntry" 
+        color="danger"
+        (click)="deleteEntry(editingEntry)">
+        <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- ============================================ -->
+  <!-- Entry Form (create/edit) -->
+  <!-- ============================================ -->
+  <ng-container *ngIf="editingEntry">
+    <div class="entry-form">
+      <!-- Date/Time inputs -->
+      <div class="datetime-row">
+        <div class="input-group">
+          <label>Date</label>
+          <input 
+            type="date" 
+            [(ngModel)]="formDate" 
+            (input)="onInputChange()"
+            (blur)="onInputBlur()"
+            class="datetime-input">
+        </div>
+        <div class="input-group">
+          <label>Time</label>
+          <input 
+            type="time" 
+            [(ngModel)]="formTime" 
+            (input)="onInputChange()"
+            (blur)="onInputBlur()"
+            class="datetime-input">
+        </div>
+      </div>
+
+      <!-- Text input (what was eaten) -->
+      <div class="text-row">
+        <div class="input-group">
+          <label>What did you eat or drink?</label>
+          <textarea 
+            [(ngModel)]="formText" 
+            (input)="onInputChange()"
+            (blur)="onInputBlur()"
+            placeholder="e.g., Coffee and toast, chicken salad..."
+            rows="4"
+            class="text-input"></textarea>
+        </div>
+      </div>
+
+      <!-- Note input (optional) -->
+      <div class="note-row">
+        <div class="input-group">
+          <label>Note (optional)</label>
+          <textarea 
+            [(ngModel)]="formNote" 
+            (input)="onInputChange()"
+            (blur)="onInputBlur()"
+            placeholder="Add a note..."
+            rows="2"
+            class="note-input"></textarea>
+        </div>
+      </div>
+
+      <!-- Done button -->
+      <ion-button 
+        expand="block" 
+        class="done-button"
+        [disabled]="!formText.trim()"
+        (click)="saveAndClose()">
+        Done
+      </ion-button>
+    </div>
+  </ng-container>
+
+  <!-- ============================================ -->
+  <!-- History List -->
+  <!-- ============================================ -->
+  <ng-container *ngIf="!editingEntry">
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="loading-state">
+      <ion-spinner name="crescent"></ion-spinner>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!isLoading && entries.length === 0" class="empty-state">
+      <ion-icon name="restaurant-outline"></ion-icon>
+      <p>No entries yet</p>
+      <ion-button fill="outline" (click)="startNewEntry()">
+        Add your first entry
+      </ion-button>
+    </div>
+
+    <!-- Entries list -->
+    <div *ngIf="!isLoading && entries.length > 0" class="entries-list">
+      <div 
+        *ngFor="let entry of entries" 
+        class="entry-card"
+        (click)="editEntry(entry)">
+        <div class="entry-main">
+          <span class="entry-text">{{ truncateText(entry.text) }}</span>
+          <span class="entry-datetime">
+            {{ formatDisplayDate(entry.loggedAt) }} · {{ formatDisplayTime(entry.loggedAt) }}
+          </span>
+        </div>
+        <div *ngIf="entry.note" class="entry-note">
+          {{ entry.note }}
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Undo Toast -->
+  <div class="undo-toast" *ngIf="undoState">
+    <span class="undo-message">Entry deleted.</span>
+    <button class="undo-action" (click)="undoDelete()">Undo</button>
+  </div>
+</ion-content>
