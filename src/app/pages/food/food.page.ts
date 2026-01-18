@@ -4,7 +4,15 @@ import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { FoodEntry, deriveLocalDate } from '../../models';
 import { DbService } from '../../services/db';
-import { generateUUID } from '../../utils';
+import {
+  generateUUID,
+  formatDateForInput,
+  formatTimeForInput,
+  buildIsoFromDateAndTime,
+  formatDisplayDate,
+  formatDisplayTime,
+  truncateText
+} from '../../utils';
 
 /** Debounce time for auto-save while typing (ms) */
 const AUTOSAVE_DEBOUNCE_MS = 400;
@@ -112,8 +120,8 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
     this.isNewEntry = true;
 
     // Set form fields
-    this.formDate = this.formatDateForInput(now);
-    this.formTime = this.formatTimeForInput(now);
+    this.formDate = formatDateForInput(now);
+    this.formTime = formatTimeForInput(now);
     this.formText = '';
     this.formNote = '';
   }
@@ -126,8 +134,8 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
     this.isNewEntry = false;
 
     const loggedDate = new Date(entry.loggedAt);
-    this.formDate = this.formatDateForInput(loggedDate);
-    this.formTime = this.formatTimeForInput(loggedDate);
+    this.formDate = formatDateForInput(loggedDate);
+    this.formTime = formatTimeForInput(loggedDate);
     this.formText = entry.text;
     this.formNote = entry.note || '';
   }
@@ -170,7 +178,7 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
     }
 
     // Build ISO timestamp from date + time
-    const loggedAt = this.buildIsoFromDateAndTime(this.formDate, this.formTime);
+    const loggedAt = buildIsoFromDateAndTime(this.formDate, this.formTime);
     const date = deriveLocalDate(loggedAt);
     const now = new Date().toISOString();
 
@@ -300,67 +308,15 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   // ============================================
-  // Helpers
+  // Template helpers (delegate to shared utils)
   // ============================================
 
-  /**
-   * Format date for input (YYYY-MM-DD).
-   */
-  private formatDateForInput(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
+  /** Format loggedAt for display (date portion). */
+  formatDisplayDate = formatDisplayDate;
 
-  /**
-   * Format time for input (HH:mm).
-   */
-  private formatTimeForInput(date: Date): string {
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
+  /** Format loggedAt for display (time portion). */
+  formatDisplayTime = formatDisplayTime;
 
-  /**
-   * Build ISO timestamp from date and time strings.
-   */
-  private buildIsoFromDateAndTime(dateStr: string, timeStr: string): string {
-    // dateStr: YYYY-MM-DD, timeStr: HH:mm
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const date = new Date(year, month - 1, day, hours, minutes, 0, 0);
-    return date.toISOString();
-  }
-
-  /**
-   * Format loggedAt for display (date portion).
-   */
-  formatDisplayDate(isoString: string): string {
-    const date = new Date(isoString);
-    return date.toLocaleDateString([], {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
-
-  /**
-   * Format loggedAt for display (time portion).
-   */
-  formatDisplayTime(isoString: string): string {
-    const date = new Date(isoString);
-    return date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  /**
-   * Truncate text for display in list view.
-   */
-  truncateText(text: string, maxLength = 60): string {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength).trim() + '…';
-  }
+  /** Truncate text for display in list view. */
+  truncateText = truncateText;
 }
