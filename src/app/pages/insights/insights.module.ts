@@ -14,3 +14,5 @@ import { InsightsRoutingModule } from './insights-routing.module';
 })
 export class InsightsPageModule {}
 
+
+

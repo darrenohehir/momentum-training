@@ -15,3 +15,5 @@ export function computeLevel(totalXp: number): number {
   return Math.floor(totalXp / 1000) + 1;
 }
 
+
+

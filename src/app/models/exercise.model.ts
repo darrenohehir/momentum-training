@@ -43,3 +43,5 @@ export interface Exercise {
   updatedAt: string;
 }
 
+
+

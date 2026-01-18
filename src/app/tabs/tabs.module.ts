@@ -14,3 +14,5 @@ import { TabsRoutingModule } from './tabs-routing.module';
 })
 export class TabsPageModule {}
 
+
+

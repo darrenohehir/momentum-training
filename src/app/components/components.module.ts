@@ -24,3 +24,5 @@ import { ExercisePickerComponent } from './exercise-picker/exercise-picker.compo
 })
 export class ComponentsModule {}
 
+
+

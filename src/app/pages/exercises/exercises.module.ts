@@ -14,3 +14,5 @@ import { ExercisesRoutingModule } from './exercises-routing.module';
 })
 export class ExercisesPageModule {}
 
+
+
