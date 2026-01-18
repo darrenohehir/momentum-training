@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ViewWillEnter } from '@ionic/angular';
-import { Subject } from 'rxjs';
+import { ViewWillEnter, ViewWillLeave } from '@ionic/angular';
+import { Subject, Subscription } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { FoodEntry, deriveLocalDate } from '../../models';
 import { DbService } from '../../services/db';
@@ -25,7 +25,7 @@ const AUTOSAVE_DEBOUNCE_MS = 400;
   styleUrls: ['./food.page.scss'],
   standalone: false
 })
-export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
+export class FoodPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave {
   /** All food entries (newest first) */
   entries: FoodEntry[] = [];
 
@@ -48,6 +48,10 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
   private saveSubject = new Subject<void>();
   private destroy$ = new Subject<void>();
 
+  /** Tracks whether a debounced save is pending (for flush-on-exit) */
+  private hasPendingSave = false;
+  private saveSubscription: Subscription | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -57,17 +61,21 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
 
   ngOnInit(): void {
     // Set up debounced auto-save
-    this.saveSubject.pipe(
+    this.saveSubscription = this.saveSubject.pipe(
       debounceTime(AUTOSAVE_DEBOUNCE_MS),
       takeUntil(this.destroy$)
     ).subscribe(() => {
+      this.hasPendingSave = false;
       this.persistCurrentEntry();
     });
   }
 
   ngOnDestroy(): void {
+    // Flush any pending save before destroying
+    this.flushPendingSave();
     this.destroy$.next();
     this.destroy$.complete();
+    this.saveSubscription?.unsubscribe();
     this.undoToast.dismiss();
   }
 
@@ -90,6 +98,13 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
       // Enter create mode
       this.startNewEntry();
     }
+  }
+
+  /**
+   * Ionic lifecycle hook: flush pending saves when leaving the page.
+   */
+  async ionViewWillLeave(): Promise<void> {
+    await this.flushPendingSave();
   }
 
   /**
@@ -151,8 +166,10 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
 
   /**
    * Cancel editing and return to list.
+   * Flushes any pending save before exiting edit mode.
    */
-  cancelEdit(): void {
+  async cancelEdit(): Promise<void> {
+    await this.flushPendingSave();
     this.editingEntry = null;
     this.isNewEntry = false;
   }
@@ -161,6 +178,7 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
    * Handle input changes - trigger debounced save.
    */
   onInputChange(): void {
+    this.hasPendingSave = true;
     this.saveSubject.next();
   }
 
@@ -168,51 +186,83 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
    * Handle blur on inputs - save immediately.
    */
   onInputBlur(): void {
-    this.persistCurrentEntry();
+    // Fire-and-forget flush on blur (don't block UI)
+    this.flushPendingSave();
+  }
+
+  /**
+   * Flush any pending save immediately.
+   * Called when leaving edit mode or the page to prevent data loss.
+   * Unconditionally attempts to persist if editing (persistCurrentEntry validates data).
+   */
+  private async flushPendingSave(): Promise<void> {
+    if (!this.editingEntry) return;
+
+    // Clear pending flag to prevent debounce callback from double-writing
+    this.hasPendingSave = false;
+
+    await this.persistCurrentEntry();
   }
 
   /**
    * Persist the current entry to IndexedDB.
    * Only saves if text is provided (required field).
    * Updates the in-memory entries array directly (no full reload).
+   * 
+   * Uses snapshotted values to avoid race conditions if state changes mid-flight.
    */
   private async persistCurrentEntry(): Promise<void> {
-    if (!this.editingEntry) return;
+    // Snapshot current state at call time to avoid race conditions
+    const editingEntry = this.editingEntry;
+    if (!editingEntry) return;
 
-    // Parse form values
     const text = this.formText.trim();
     if (!text) {
       // Don't persist without text content
       return;
     }
 
+    // Snapshot form values
+    const formDate = this.formDate;
+    const formTime = this.formTime;
+    const formNote = this.formNote;
+    const isNewEntry = this.isNewEntry;
+
     // Build ISO timestamp from date + time
-    const loggedAt = buildIsoFromDateAndTime(this.formDate, this.formTime);
+    const loggedAt = buildIsoFromDateAndTime(formDate, formTime);
     const date = deriveLocalDate(loggedAt);
     const now = new Date().toISOString();
 
-    // Update entry object
-    this.editingEntry.text = text;
-    this.editingEntry.loggedAt = loggedAt;
-    this.editingEntry.date = date;
-    this.editingEntry.note = this.formNote.trim() || undefined;
-    this.editingEntry.updatedAt = now;
+    // Build entry to save (don't mutate component state during async)
+    const entryToSave: FoodEntry = {
+      ...editingEntry,
+      text,
+      loggedAt,
+      date,
+      note: formNote.trim() || undefined,
+      updatedAt: now
+    };
 
     try {
-      if (this.isNewEntry) {
+      if (isNewEntry) {
         // Check if this entry exists in DB (may have been created already by previous save)
-        const existing = await this.db.getFoodEntry(this.editingEntry.id);
+        const existing = await this.db.getFoodEntry(entryToSave.id);
         if (existing) {
-          await this.db.updateFoodEntry(this.editingEntry);
+          await this.db.updateFoodEntry(entryToSave);
         } else {
-          await this.db.addFoodEntry(this.editingEntry);
+          await this.db.addFoodEntry(entryToSave);
         }
       } else {
-        await this.db.updateFoodEntry(this.editingEntry);
+        await this.db.updateFoodEntry(entryToSave);
       }
 
       // Update in-memory array directly (no full reload)
-      this.updateEntriesArray(this.editingEntry);
+      this.updateEntriesArray(entryToSave);
+
+      // Sync component state if still editing the same entry
+      if (this.editingEntry?.id === entryToSave.id) {
+        this.editingEntry = entryToSave;
+      }
     } catch (error) {
       console.error('Failed to save food entry:', error);
     }
@@ -246,7 +296,10 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
    */
   async saveAndClose(): Promise<void> {
     await this.persistCurrentEntry();
-    this.cancelEdit();
+    // Clear state directly (no need to flush again via cancelEdit)
+    this.hasPendingSave = false;
+    this.editingEntry = null;
+    this.isNewEntry = false;
   }
 
   // ============================================
