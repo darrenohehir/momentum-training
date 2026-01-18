@@ -8,8 +8,9 @@ import { PREvent } from './pr-event.model';
 
 /**
  * Current schema version for export/import compatibility.
+ * Version 3: Added loggedAt field to bodyweightEntries
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 /**
  * Data container within ExportPayload.

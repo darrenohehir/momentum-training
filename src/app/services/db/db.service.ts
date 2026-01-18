@@ -125,6 +125,32 @@ export class DbService extends Dexie {
       gamificationState: 'id',
       prEvents: 'id, sessionId, exerciseId'
     });
+
+    // Version 3: Add loggedAt to bodyweightEntries for proper ordering
+    this.version(3).stores({
+      exercises: 'id, category, name',
+      sessions: 'id, startedAt, endedAt',
+      sessionExercises: 'id, sessionId, exerciseId, [sessionId+orderIndex]',
+      sets: 'id, sessionExerciseId, [sessionExerciseId+setIndex]',
+      bodyweightEntries: 'id, date, loggedAt', // Added loggedAt index
+      gamificationState: 'id',
+      prEvents: 'id, sessionId, exerciseId'
+    }).upgrade(async tx => {
+      // Migrate existing bodyweight entries: set loggedAt from createdAt if missing
+      const entries = await tx.table('bodyweightEntries').toArray();
+      for (const entry of entries) {
+        if (!entry.loggedAt) {
+          // Use createdAt as loggedAt fallback
+          entry.loggedAt = entry.createdAt;
+          // Ensure date is valid; if missing, derive from loggedAt
+          if (!entry.date && entry.loggedAt) {
+            const d = new Date(entry.loggedAt);
+            entry.date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          }
+          await tx.table('bodyweightEntries').put(entry);
+        }
+      }
+    });
   }
 
   /**
@@ -733,6 +759,61 @@ export class DbService extends Dexie {
 
     // Filter to sets with valid weights (not null/undefined and > 0)
     return sets.filter(s => s.weight !== undefined && s.weight !== null && s.weight > 0);
+  }
+
+  // ============================================
+  // Bodyweight entries
+  // ============================================
+
+  /**
+   * Get all bodyweight entries, sorted by loggedAt descending (newest first).
+   * Uses Dexie index-based ordering for performance.
+   */
+  async getBodyweightEntries(): Promise<BodyweightEntry[]> {
+    // Use the loggedAt index with reverse() for descending order (newest first)
+    // ISO 8601 strings sort lexicographically, matching chronological order
+    return this.bodyweightEntries.orderBy('loggedAt').reverse().toArray();
+  }
+
+  /**
+   * Get a single bodyweight entry by id.
+   */
+  async getBodyweightEntry(id: string): Promise<BodyweightEntry | undefined> {
+    return this.bodyweightEntries.get(id);
+  }
+
+  /**
+   * Add a new bodyweight entry (create only).
+   * Throws if entry with same id already exists.
+   * @returns The id of the created entry
+   */
+  async addBodyweightEntry(entry: BodyweightEntry): Promise<string> {
+    await this.bodyweightEntries.add(entry);
+    return entry.id;
+  }
+
+  /**
+   * Update an existing bodyweight entry (upsert semantics via Dexie put).
+   * Creates the entry if it doesn't exist, updates if it does.
+   */
+  async updateBodyweightEntry(entry: BodyweightEntry): Promise<void> {
+    await this.bodyweightEntries.put(entry);
+  }
+
+  /**
+   * Restore a bodyweight entry (idempotent upsert for undo functionality).
+   * Uses put() so it won't fail if the entry already exists.
+   * Preferred over addBodyweightEntry() for undo operations.
+   */
+  async restoreBodyweightEntry(entry: BodyweightEntry): Promise<void> {
+    await this.bodyweightEntries.put(entry);
+  }
+
+  /**
+   * Delete a bodyweight entry by id.
+   */
+  async deleteBodyweightEntry(id: string): Promise<void> {
+    await this.bodyweightEntries.delete(id);
   }
 
   // ============================================
