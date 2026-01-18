@@ -4,6 +4,7 @@ import { ModalController, ItemReorderEventDetail, ViewWillEnter } from '@ionic/a
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import { DbService, LastAttemptResult } from '../../services/db';
 import { AppEventsService } from '../../services/events';
+import { UndoToastService } from '../../services/ui';
 import { XpService } from '../../services/xp';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
 import { Subject } from 'rxjs';
@@ -39,20 +40,6 @@ interface PendingSetUpdate {
   set: Set;
 }
 
-/**
- * State for undoing an exercise removal.
- * Only one undo is supported at a time; new removals replace the previous.
- */
-interface UndoState {
-  /** The removed SessionExerciseView (contains sessionExercise, exercise, sets) */
-  item: SessionExerciseView;
-  /** Original index in the sessionExercises array */
-  originalIndex: number;
-}
-
-/** Undo window duration in milliseconds */
-const UNDO_TIMEOUT_MS = 5000;
-
 @Component({
   selector: 'app-session',
   templateUrl: './session.page.html',
@@ -85,15 +72,6 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
    */
   ghostByExerciseId: Record<string, LastAttemptResult | null> = {};
 
-  /**
-   * Undo state for exercise removal.
-   * Only one undoable action at a time; null when no undo is available.
-   */
-  undoState: UndoState | null = null;
-
-  /** Timer reference for auto-clearing undo state */
-  private undoTimer: ReturnType<typeof setTimeout> | null = null;
-
   /** Subject for debounced set updates */
   private setUpdateSubject = new Subject<PendingSetUpdate>();
 
@@ -106,6 +84,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     private db: DbService,
     private modalController: ModalController,
     private appEvents: AppEventsService,
+    private undoToast: UndoToastService,
     private xpService: XpService
   ) {
     // Set up debounced auto-save for set updates
@@ -120,11 +99,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    // Clean up undo timer
-    if (this.undoTimer) {
-      clearTimeout(this.undoTimer);
-      this.undoTimer = null;
-    }
+    this.undoToast.dismiss();
   }
 
   async ngOnInit(): Promise<void> {
@@ -139,8 +114,8 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     // Reset finishing state (critical: prevents disabled button bug)
     this.isFinishing = false;
 
-    // Clear any stale undo state
-    this.clearUndo();
+    // Clear any stale undo toast
+    this.undoToast.dismiss();
 
     const sessionId = this.route.snapshot.paramMap.get('id');
     if (!sessionId) {
@@ -368,12 +343,9 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
   /**
    * Remove an exercise from the current session.
    * Deletes the SessionExercise and all associated sets from IndexedDB.
-   * Shows undo affordance for a short window.
+   * Shows an ion-toast with "Undo" button; restores if tapped within timeout.
    */
   async removeExercise(item: SessionExerciseView): Promise<void> {
-    // Clear any previous undo state (only one at a time)
-    this.clearUndo();
-
     // Find the index in the array
     const index = this.sessionExercises.findIndex(
       se => se.sessionExercise.id === item.sessionExercise.id
@@ -387,55 +359,24 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
       // Remove from local array
       this.sessionExercises.splice(index, 1);
 
-      // Store undo state
-      this.undoState = {
-        item,
-        originalIndex: index
-      };
+      // Show undo toast (dismisses any existing toast first)
+      await this.undoToast.present({
+        message: 'Exercise removed',
+        onUndo: async () => {
+          try {
+            // Restore to IndexedDB
+            await this.db.restoreSessionExercise(item.sessionExercise, item.sets);
 
-      // Set timer to auto-clear undo
-      this.undoTimer = setTimeout(() => {
-        this.clearUndo();
-      }, UNDO_TIMEOUT_MS);
+            // Restore to local array at original position
+            this.sessionExercises.splice(index, 0, item);
+          } catch (error) {
+            console.error('Failed to undo exercise removal:', error);
+          }
+        }
+      });
     } catch (error) {
       console.error('Failed to remove exercise:', error);
     }
-  }
-
-  /**
-   * Undo the last exercise removal.
-   * Restores the exercise and all its sets to IndexedDB and UI.
-   */
-  async undoRemoveExercise(): Promise<void> {
-    if (!this.undoState) return;
-
-    const { item, originalIndex } = this.undoState;
-
-    try {
-      // Restore to IndexedDB
-      await this.db.restoreSessionExercise(item.sessionExercise, item.sets);
-
-      // Restore to local array at original position
-      this.sessionExercises.splice(originalIndex, 0, item);
-
-      // Clear undo state
-      this.clearUndo();
-    } catch (error) {
-      console.error('Failed to undo exercise removal:', error);
-      // Clear undo state even on error to avoid stale state
-      this.clearUndo();
-    }
-  }
-
-  /**
-   * Clear the undo state and timer.
-   */
-  private clearUndo(): void {
-    if (this.undoTimer) {
-      clearTimeout(this.undoTimer);
-      this.undoTimer = null;
-    }
-    this.undoState = null;
   }
 
   // ============================================

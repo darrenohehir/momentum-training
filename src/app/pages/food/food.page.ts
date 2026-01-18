@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { FoodEntry, deriveLocalDate } from '../../models';
 import { DbService } from '../../services/db';
+import { UndoToastService } from '../../services/ui';
 import {
   generateUUID,
   formatDateForInput,
@@ -16,14 +17,6 @@ import {
 
 /** Debounce time for auto-save while typing (ms) */
 const AUTOSAVE_DEBOUNCE_MS = 400;
-
-/** Undo window duration in milliseconds */
-const UNDO_TIMEOUT_MS = 5000;
-
-/** State for undoing a deletion */
-interface UndoState {
-  entry: FoodEntry;
-}
 
 @Component({
   selector: 'app-food',
@@ -50,15 +43,14 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
   formText = '';
   formNote = '';
 
-  /** Undo state for deletions */
-  undoState: UndoState | null = null;
-  private undoTimer: ReturnType<typeof setTimeout> | null = null;
-
   /** Subjects for debounced auto-save */
   private saveSubject = new Subject<void>();
   private destroy$ = new Subject<void>();
 
-  constructor(private db: DbService) {}
+  constructor(
+    private db: DbService,
+    private undoToast: UndoToastService
+  ) {}
 
   ngOnInit(): void {
     // Set up debounced auto-save
@@ -73,7 +65,7 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.clearUndo();
+    this.undoToast.dismiss();
   }
 
   /**
@@ -246,11 +238,9 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
 
   /**
    * Delete an entry with undo support.
+   * Shows an ion-toast with "Undo" button; restores if tapped within timeout.
    */
   async deleteEntry(entry: FoodEntry): Promise<void> {
-    // Clear any previous undo
-    this.clearUndo();
-
     try {
       // Delete from DB
       await this.db.deleteFoodEntry(entry.id);
@@ -264,47 +254,21 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter {
         this.isNewEntry = false;
       }
 
-      // Set undo state
-      this.undoState = { entry };
-
-      // Auto-clear undo after timeout
-      this.undoTimer = setTimeout(() => {
-        this.clearUndo();
-      }, UNDO_TIMEOUT_MS);
+      // Show undo toast (dismisses any existing toast first)
+      await this.undoToast.present({
+        message: 'Entry deleted',
+        onUndo: async () => {
+          try {
+            await this.db.restoreFoodEntry(entry);
+            await this.loadEntries();
+          } catch (error) {
+            console.error('Failed to undo delete:', error);
+          }
+        }
+      });
     } catch (error) {
       console.error('Failed to delete entry:', error);
     }
-  }
-
-  /**
-   * Undo the last deletion.
-   * Uses restoreFoodEntry (upsert) so it won't fail if entry already exists.
-   */
-  async undoDelete(): Promise<void> {
-    if (!this.undoState) return;
-
-    try {
-      // Restore to DB using idempotent upsert
-      await this.db.restoreFoodEntry(this.undoState.entry);
-
-      // Reload list
-      await this.loadEntries();
-    } catch (error) {
-      console.error('Failed to undo delete:', error);
-    } finally {
-      this.clearUndo();
-    }
-  }
-
-  /**
-   * Clear undo state and timer.
-   */
-  private clearUndo(): void {
-    if (this.undoTimer) {
-      clearTimeout(this.undoTimer);
-      this.undoTimer = null;
-    }
-    this.undoState = null;
   }
 
   // ============================================

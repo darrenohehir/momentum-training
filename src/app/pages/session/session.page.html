@@ -252,10 +252,4 @@
       {{ isFinishing ? 'Finishing...' : 'Finish Session' }}
     </ion-button>
   </ng-container>
-
-  <!-- Undo Toast (minimal, one-line) -->
-  <div class="undo-toast" *ngIf="undoState">
-    <span class="undo-message">Exercise removed.</span>
-    <button class="undo-action" (click)="undoRemoveExercise()">Undo</button>
-  </div>
 </ion-content>
