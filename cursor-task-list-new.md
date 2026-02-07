@@ -320,7 +320,7 @@ Guardrails:
 
 ---
 
-### Task 11A.2 – Day detail interaction
+### DESCOPED: Task 11A.2 – Day detail interaction
 
 - Tapping a day focuses History on that day
   - Either via inline list filtering or a lightweight drawer/screen
@@ -335,6 +335,10 @@ Guardrails:
 - This is a timeline, not an evaluation
 - Keep language factual (“Logged”, “Recorded”)
 - No comparative or trend language
+
+**Notes**
+
+- This has been descoped. Low value vs build cost. Calendar already does its job without this functionality.
 
 ---
 
@@ -361,18 +365,37 @@ Guardrails:
 
 ---
 
-### Task 11B.2 – Optional minimal counts (day detail only)
+### Task 11B.2 – Sticky day headers in History
 
-- In day-focused views only (not the calendar grid):
-  - Show counts such as:
-    - “2 sessions”
-    - “1 bodyweight entry”
-    - “3 food entries”
+- Make day headers (`.day-heading`) sticky within the History list.
+- Header should update as the user scrolls between day groups.
 
 **Guardrails**
 
-- Counts must never appear in the calendar grid
-- Avoid visual emphasis that suggests scoring or achievement
+- Headers are informational only (date, no counts).
+- No emphasis or styling that suggests achievement.
+
+---
+
+### DESCOPED: Task 11B.3 – Optional minimal counts (day detail only)
+
+**Reason for descoping:**
+
+- Depended on Task 11A.2 (Day detail interaction), which has been descoped.
+- No remaining surface where counts add value without introducing evaluative or summary UX.
+
+---
+
+### Task 11B.3 – Filter empty states
+
+- When a filter produces no results:
+  - Show a calm, factual empty message (e.g. "No bodyweight entries for this...")
+- Do not suggest corrective action or goals.
+
+**Guardrails**
+
+- No motivational language
+- No “get started” CTAs
 
 ---
 

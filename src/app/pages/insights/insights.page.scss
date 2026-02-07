@@ -146,6 +146,44 @@
   }
 }
 
+/* History filter: view filter for calendar + list */
+.history-filter-section {
+  margin-bottom: 20px;
+  padding: 0 2px;
+
+  ion-segment {
+    --background: var(--ion-color-step-100);
+    border-radius: 8px;
+    min-height: 36px;
+  }
+
+  ion-segment-button {
+    --indicator-height: 2px;
+    --padding-top: 8px;
+    --padding-bottom: 8px;
+    min-height: 36px;
+    font-size: 0.85rem;
+
+    ion-label {
+      text-transform: none;
+      font-weight: 500;
+    }
+  }
+}
+
+.empty-state--filtered {
+  padding: 32px 24px;
+  min-height: 120px;
+
+  ion-icon {
+    font-size: 48px;
+  }
+
+  h2 {
+    font-size: 1.1rem;
+  }
+}
+
 .loading-state {
   display: flex;
   flex-direction: column;

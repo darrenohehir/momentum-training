@@ -58,6 +58,9 @@ export type CalendarCell =
   | { isPlaceholder: true }
   | { isPlaceholder: false; day: number; dayKey: string; hasSession: boolean; hasBodyweight: boolean; hasFood: boolean };
 
+/** History view filter: which log types to show in calendar and list. */
+export type HistoryFilter = 'all' | 'session' | 'bodyweight' | 'food';
+
 @Component({
   selector: 'app-insights',
   templateUrl: './insights.page.html',
@@ -94,6 +97,9 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
 
   /** Weekday labels (Monday first). */
   readonly calendarWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  /** View filter: which log types to show in calendar and list. Default All. */
+  historyFilter: HistoryFilter = 'all';
 
   /** True when this tab/page is visible (so we only refresh on activityChanged when active). */
   private isActive = false;
@@ -361,6 +367,44 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
    */
   getCalendarMonthLabel(): string {
     return this.displayedCalendarMonth.toLocaleDateString([], { month: 'long', year: 'numeric' });
+  }
+
+  /**
+   * Whether the given log type is visible in the current filter (shared for calendar and list).
+   */
+  typeVisibleInFilter(type: HistoryItem['type']): boolean {
+    return this.historyFilter === 'all' || this.historyFilter === type;
+  }
+
+  /**
+   * Set the history view filter (calendar and list update immediately).
+   */
+  setHistoryFilter(value: HistoryFilter): void {
+    this.historyFilter = value;
+  }
+
+  /**
+   * History list grouped by day, filtered by current filter. Preserves day grouping and order.
+   */
+  getFilteredGroups(): HistoryDayGroup[] {
+    return this.unifiedGroups
+      .map(g => ({
+        ...g,
+        items: g.items.filter(item => this.typeVisibleInFilter(item.type))
+      }))
+      .filter(g => g.items.length > 0);
+  }
+
+  /**
+   * Message when filtered list is empty (factual, calm).
+   */
+  getEmptyFilterMessage(): string {
+    switch (this.historyFilter) {
+      case 'session': return 'No sessions yet';
+      case 'bodyweight': return 'No bodyweight entries yet';
+      case 'food': return 'No food entries yet';
+      default: return 'No activity yet';
+    }
   }
 
   /**

@@ -15,7 +15,25 @@
 
   <!-- Content -->
   <ng-container *ngIf="!isLoading">
-    <!-- Calendar Section (top) -->
+    <!-- History filter: affects calendar markers and list below -->
+    <section class="history-filter-section">
+      <ion-segment [value]="historyFilter" (ionChange)="setHistoryFilter($any($event).detail.value)">
+        <ion-segment-button value="all">
+          <ion-label>All</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="session">
+          <ion-label>Sessions</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="bodyweight">
+          <ion-label>Bodyweight</ion-label>
+        </ion-segment-button>
+        <ion-segment-button value="food">
+          <ion-label>Food</ion-label>
+        </ion-segment-button>
+      </ion-segment>
+    </section>
+
+    <!-- Calendar Section -->
     <section class="calendar-section">
       <div class="calendar-header">
         <ion-button fill="clear" size="small" (click)="prevCalendarMonth()" aria-label="Previous month">
@@ -39,10 +57,10 @@
           <div *ngIf="cell.isPlaceholder" class="calendar-cell calendar-cell--placeholder"></div>
           <div *ngIf="!cell.isPlaceholder" class="calendar-cell calendar-cell--day">
             <span class="calendar-cell-day">{{ cell.day }}</span>
-            <div class="calendar-markers" *ngIf="cell.hasSession || cell.hasBodyweight || cell.hasFood">
-              <span *ngIf="cell.hasSession" class="calendar-marker calendar-marker--session" title="Session"></span>
-              <span *ngIf="cell.hasBodyweight" class="calendar-marker calendar-marker--bodyweight" title="Bodyweight"></span>
-              <span *ngIf="cell.hasFood" class="calendar-marker calendar-marker--food" title="Food"></span>
+            <div class="calendar-markers" *ngIf="(cell.hasSession && typeVisibleInFilter('session')) || (cell.hasBodyweight && typeVisibleInFilter('bodyweight')) || (cell.hasFood && typeVisibleInFilter('food'))">
+              <span *ngIf="cell.hasSession && typeVisibleInFilter('session')" class="calendar-marker calendar-marker--session" title="Session"></span>
+              <span *ngIf="cell.hasBodyweight && typeVisibleInFilter('bodyweight')" class="calendar-marker calendar-marker--bodyweight" title="Bodyweight"></span>
+              <span *ngIf="cell.hasFood && typeVisibleInFilter('food')" class="calendar-marker calendar-marker--food" title="Food"></span>
             </div>
           </div>
         </ng-container>
@@ -95,16 +113,22 @@
     <section class="history-section">
       <h2 class="section-title">Activity</h2>
 
-      <!-- Empty State -->
+      <!-- Empty state: no data at all -->
       <div *ngIf="unifiedGroups.length === 0" class="empty-state">
         <ion-icon name="calendar-outline"></ion-icon>
         <h2>No activity yet</h2>
         <p>Sessions, bodyweight, and food logs will appear here.</p>
       </div>
 
-      <!-- Unified list grouped by day -->
-      <ng-container *ngIf="unifiedGroups.length > 0">
-        <div *ngFor="let group of unifiedGroups" class="day-group">
+      <!-- Empty state: filter has no matches -->
+      <div *ngIf="unifiedGroups.length > 0 && getFilteredGroups().length === 0" class="empty-state empty-state--filtered">
+        <ion-icon name="filter-outline"></ion-icon>
+        <h2>{{ getEmptyFilterMessage() }}</h2>
+      </div>
+
+      <!-- Unified list grouped by day (filtered) -->
+      <ng-container *ngIf="getFilteredGroups().length > 0">
+        <div *ngFor="let group of getFilteredGroups()" class="day-group">
           <h3 class="day-heading">{{ group.dateHeading }}</h3>
           <ion-list class="history-list">
             <ion-item

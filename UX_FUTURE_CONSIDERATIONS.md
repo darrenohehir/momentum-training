@@ -122,3 +122,10 @@ Any future enhancement should:
 ## Consider how to handle non-weight exercises like Treadmill.
 
 - Treadmill is more about distance, pace, ramp, etc. It's not the typical 'set' = 'weight' x 'reps'.
+
+---
+
+**Calendar month switching**
+
+- Changing the visible calendar month does not filter or affect the History list.
+- The calendar is an informational overlay only.
