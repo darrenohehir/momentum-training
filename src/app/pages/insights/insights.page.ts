@@ -46,6 +46,18 @@ export interface HistoryDayGroup {
   items: HistoryItem[];
 }
 
+/** Presence of log types for a calendar day (dayKey). */
+export interface CalendarDayPresence {
+  hasSession: boolean;
+  hasBodyweight: boolean;
+  hasFood: boolean;
+}
+
+/** Cell in the calendar grid: either a placeholder (blank) or a day with optional markers. */
+export type CalendarCell =
+  | { isPlaceholder: true }
+  | { isPlaceholder: false; day: number; dayKey: string; hasSession: boolean; hasBodyweight: boolean; hasFood: boolean };
+
 @Component({
   selector: 'app-insights',
   templateUrl: './insights.page.html',
@@ -70,6 +82,18 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
 
   /** Recent PRs with exercise names */
   recentPRs: PRDisplayItem[] = [];
+
+  /** Calendar: first day of the currently displayed month. */
+  displayedCalendarMonth: Date = (() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  })();
+
+  /** Calendar: flat grid of cells (placeholders + days) for the displayed month. */
+  calendarGrid: CalendarCell[] = [];
+
+  /** Weekday labels (Monday first). */
+  readonly calendarWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   /** True when this tab/page is visible (so we only refresh on activityChanged when active). */
   private isActive = false;
@@ -155,16 +179,151 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
         bodyweightSince60d,
         foodSince60d
       );
+
+      await this.loadCalendarData();
     } catch (error) {
       console.error('Failed to load history data:', error);
       this.sessionsLast4Weeks = 0;
       this.weeklyBreakdown = [];
       this.recentPRs = [];
       this.unifiedGroups = [];
+      this.calendarGrid = [];
     } finally {
       this.isLoading = false;
       this.isRefreshing = false;
     }
+  }
+
+  /**
+   * First day of month (00:00:00) for the given date.
+   */
+  private getMonthStart(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  }
+
+  /**
+   * First day of the next month (exclusive end for range queries).
+   */
+  private getMonthEnd(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth() + 1, 1);
+  }
+
+  /**
+   * Load calendar data for the displayed month (bounded range queries).
+   * Sessions: endedAt-in-range (completed) plus startedAt-in-range (merge by id) so
+   * in-progress or no-endedAt sessions mark the started day, matching History (endedAt || startedAt).
+   */
+  private async loadCalendarData(): Promise<void> {
+    const start = this.getMonthStart(this.displayedCalendarMonth);
+    const end = this.getMonthEnd(this.displayedCalendarMonth);
+
+    const [sessionsEndedInRange, sessionsStartedInRange, bodyweightEntries, foodEntries] = await Promise.all([
+      this.db.getSessionsInRange(start, end),
+      this.db.getSessionsStartedInRange(start, end),
+      this.db.getBodyweightEntriesInRange(start, end),
+      this.db.getFoodEntriesInRange(start, end)
+    ]);
+
+    const sessionsById = new Map<string, Session>();
+    for (const s of sessionsEndedInRange) sessionsById.set(s.id, s);
+    for (const s of sessionsStartedInRange) {
+      if (!sessionsById.has(s.id)) sessionsById.set(s.id, s);
+    }
+
+    const lookup: Record<string, CalendarDayPresence> = {};
+
+    for (const s of sessionsById.values()) {
+      const at = s.endedAt || s.startedAt;
+      if (!at) continue;
+      const key = deriveLocalDate(at);
+      if (!lookup[key]) lookup[key] = { hasSession: false, hasBodyweight: false, hasFood: false };
+      lookup[key].hasSession = true;
+    }
+    for (const b of bodyweightEntries) {
+      const key = b.date;
+      if (!lookup[key]) lookup[key] = { hasSession: false, hasBodyweight: false, hasFood: false };
+      lookup[key].hasBodyweight = true;
+    }
+    for (const f of foodEntries) {
+      const key = f.date;
+      if (!lookup[key]) lookup[key] = { hasSession: false, hasBodyweight: false, hasFood: false };
+      lookup[key].hasFood = true;
+    }
+
+    this.calendarGrid = this.buildCalendarGrid(this.displayedCalendarMonth, lookup);
+  }
+
+  /**
+   * Build flat grid of calendar cells (placeholders + days) for the displayed month.
+   * Week starts Monday; leading/trailing blanks to fill 7-column rows.
+   */
+  private buildCalendarGrid(monthStart: Date, lookup: Record<string, CalendarDayPresence>): CalendarCell[] {
+    const year = monthStart.getFullYear();
+    const month = monthStart.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const firstDay = new Date(year, month, 1);
+    const firstWeekday = firstDay.getDay();
+    const mondayFirstOffset = firstWeekday === 0 ? 6 : firstWeekday - 1;
+    const leadingBlanks = mondayFirstOffset;
+
+    const cells: CalendarCell[] = [];
+
+    for (let i = 0; i < leadingBlanks; i++) {
+      cells.push({ isPlaceholder: true });
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const p = lookup[dayKey] || { hasSession: false, hasBodyweight: false, hasFood: false };
+      cells.push({
+        isPlaceholder: false,
+        day,
+        dayKey,
+        hasSession: p.hasSession,
+        hasBodyweight: p.hasBodyweight,
+        hasFood: p.hasFood
+      });
+    }
+
+    const total = cells.length;
+    const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let i = 0; i < trailing; i++) {
+      cells.push({ isPlaceholder: true });
+    }
+
+    return cells;
+  }
+
+  /**
+   * Show previous month in calendar.
+   */
+  prevCalendarMonth(): void {
+    this.displayedCalendarMonth = new Date(
+      this.displayedCalendarMonth.getFullYear(),
+      this.displayedCalendarMonth.getMonth() - 1,
+      1
+    );
+    this.loadCalendarData();
+  }
+
+  /**
+   * Show next month in calendar.
+   */
+  nextCalendarMonth(): void {
+    this.displayedCalendarMonth = new Date(
+      this.displayedCalendarMonth.getFullYear(),
+      this.displayedCalendarMonth.getMonth() + 1,
+      1
+    );
+    this.loadCalendarData();
+  }
+
+  /**
+   * Label for the displayed calendar month (e.g. "January 2025").
+   */
+  getCalendarMonthLabel(): string {
+    return this.displayedCalendarMonth.toLocaleDateString([], { month: 'long', year: 'numeric' });
   }
 
   /**

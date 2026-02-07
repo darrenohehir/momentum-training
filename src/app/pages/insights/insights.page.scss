@@ -1,5 +1,109 @@
 /* History page styles */
 
+/* Calendar Section */
+.calendar-section {
+  margin-bottom: 24px;
+  padding: 12px 0;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 4px;
+
+  ion-button {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    margin: 0;
+  }
+}
+
+.calendar-month-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 6px;
+  padding: 0 2px;
+}
+
+.calendar-weekday {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.5;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 0 2px;
+}
+
+.calendar-cell {
+  aspect-ratio: 1;
+  min-height: 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--ion-color-step-50);
+
+  &--placeholder {
+    background: transparent;
+    opacity: 0.3;
+  }
+
+  &--day {
+    background: var(--ion-color-step-100);
+  }
+}
+
+.calendar-cell-day {
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.calendar-markers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.calendar-marker {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ion-color-medium);
+  opacity: 0.8;
+
+  &--session {
+    background: var(--ion-color-medium);
+  }
+
+  &--bodyweight {
+    background: var(--ion-color-medium);
+  }
+
+  &--food {
+    background: var(--ion-color-medium);
+  }
+}
+
 .loading-state {
   display: flex;
   flex-direction: column;

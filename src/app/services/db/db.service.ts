@@ -321,6 +321,34 @@ export class DbService extends Dexie {
     return sessions;
   }
 
+  /**
+   * Get completed sessions in a date range [start, end) for calendar (bounded query).
+   * Uses endedAt; start/end are converted to ISO for index query.
+   * Sessions with endedAt in range only.
+   */
+  async getSessionsInRange(startDate: Date, endDate: Date): Promise<Session[]> {
+    const startIso = startDate.toISOString();
+    const endIso = endDate.toISOString();
+    return this.sessions
+      .where('endedAt')
+      .between(startIso, endIso, true, false)
+      .toArray();
+  }
+
+  /**
+   * Get sessions that started in a date range [start, end) for calendar (bounded query).
+   * Uses startedAt index. Use with getSessionsInRange to include in-progress or no-endedAt
+   * sessions so calendar markers match History (endedAt || startedAt).
+   */
+  async getSessionsStartedInRange(startDate: Date, endDate: Date): Promise<Session[]> {
+    const startIso = startDate.toISOString();
+    const endIso = endDate.toISOString();
+    return this.sessions
+      .where('startedAt')
+      .between(startIso, endIso, true, false)
+      .toArray();
+  }
+
   // ============================================
   // Exercise queries
   // ============================================
@@ -812,6 +840,18 @@ export class DbService extends Dexie {
   }
 
   /**
+   * Get bodyweight entries in a date range [start, end) for calendar (bounded query).
+   */
+  async getBodyweightEntriesInRange(startDate: Date, endDate: Date): Promise<BodyweightEntry[]> {
+    const startIso = startDate.toISOString();
+    const endIso = endDate.toISOString();
+    return this.bodyweightEntries
+      .where('loggedAt')
+      .between(startIso, endIso, true, false)
+      .toArray();
+  }
+
+  /**
    * Get a single bodyweight entry by id.
    */
   async getBodyweightEntry(id: string): Promise<BodyweightEntry | undefined> {
@@ -874,6 +914,18 @@ export class DbService extends Dexie {
       .where('loggedAt')
       .aboveOrEqual(sinceIso)
       .reverse()
+      .toArray();
+  }
+
+  /**
+   * Get food entries in a date range [start, end) for calendar (bounded query).
+   */
+  async getFoodEntriesInRange(startDate: Date, endDate: Date): Promise<FoodEntry[]> {
+    const startIso = startDate.toISOString();
+    const endIso = endDate.toISOString();
+    return this.foodEntries
+      .where('loggedAt')
+      .between(startIso, endIso, true, false)
       .toArray();
   }
 

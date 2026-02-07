@@ -15,6 +15,35 @@
 
   <!-- Content -->
   <ng-container *ngIf="!isLoading">
+    <!-- Calendar Section (top) -->
+    <section class="calendar-section">
+      <div class="calendar-header">
+        <ion-button fill="clear" size="small" (click)="prevCalendarMonth()" aria-label="Previous month">
+          <ion-icon name="chevron-back"></ion-icon>
+        </ion-button>
+        <h2 class="calendar-month-title">{{ getCalendarMonthLabel() }}</h2>
+        <ion-button fill="clear" size="small" (click)="nextCalendarMonth()" aria-label="Next month">
+          <ion-icon name="chevron-forward"></ion-icon>
+        </ion-button>
+      </div>
+      <div class="calendar-weekdays">
+        <span *ngFor="let w of calendarWeekdays" class="calendar-weekday">{{ w }}</span>
+      </div>
+      <div class="calendar-grid">
+        <ng-container *ngFor="let cell of calendarGrid">
+          <div *ngIf="cell.isPlaceholder" class="calendar-cell calendar-cell--placeholder"></div>
+          <div *ngIf="!cell.isPlaceholder" class="calendar-cell calendar-cell--day">
+            <span class="calendar-cell-day">{{ cell.day }}</span>
+            <div class="calendar-markers" *ngIf="cell.hasSession || cell.hasBodyweight || cell.hasFood">
+              <span *ngIf="cell.hasSession" class="calendar-marker calendar-marker--session" title="Session"></span>
+              <span *ngIf="cell.hasBodyweight" class="calendar-marker calendar-marker--bodyweight" title="Bodyweight"></span>
+              <span *ngIf="cell.hasFood" class="calendar-marker calendar-marker--food" title="Food"></span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </section>
+
     <!-- Insights Section (top) -->
     <section class="insights-section" *ngIf="sessionsLast4Weeks > 0 || recentPRs.length > 0">
       <h2 class="section-title">Insights</h2>
