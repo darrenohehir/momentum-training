@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ViewWillEnter, ViewWillLeave } from '@ionic/angular';
+import { ViewWillEnter, ViewWillLeave, NavController } from '@ionic/angular';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { BodyweightEntry, deriveLocalDate } from '../../models';
@@ -54,6 +54,7 @@ export class BodyweightPage implements OnInit, OnDestroy, ViewWillEnter, ViewWil
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private navController: NavController,
     private db: DbService,
     private undoToast: UndoToastService
   ) {}
@@ -292,6 +293,7 @@ export class BodyweightPage implements OnInit, OnDestroy, ViewWillEnter, ViewWil
 
   /**
    * Save and close (explicit save action).
+   * Persists the entry then navigates to History tab (replaces stack so back does not return here).
    */
   async saveAndClose(): Promise<void> {
     await this.persistCurrentEntry();
@@ -299,6 +301,7 @@ export class BodyweightPage implements OnInit, OnDestroy, ViewWillEnter, ViewWil
     this.hasPendingSave = false;
     this.editingEntry = null;
     this.isNewEntry = false;
+    this.navController.navigateRoot('/tabs/history', { replaceUrl: true });
   }
 
   // ============================================

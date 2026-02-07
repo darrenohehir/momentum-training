@@ -135,7 +135,6 @@ This shift has two implications:
 ### Task 10B.1 – Introduce global FAB for logging actions
 
 - Add a single Floating Action Button (FAB) that is available across primary app screens
-
   - Visible on: Home, History, Exercises
   - Hidden/suppressed during modal logging flows
 
@@ -232,40 +231,64 @@ Guardrails:
 
 ---
 
-### Task 10B.4 – Navigation reliability (create flows only)
+### Task 10B.4 – Creation flow completion rules
 
 Goal:
-Ensure all create flows launched from the global FAB behave consistently and predictably.
+Ensure all creation flows behave consistently and prepare for History as the primary browsing surface.
 
-Requirements:
+Rules:
 
-- Each FAB action:
-  - Lands directly in a create/logging state (not a list-only view)
-  - Defaults date/time to “now”
-  - Uses existing autosave behaviour
-- After completing a log:
-  - User returns to the same section they were in (e.g. list view for now)
-  - No unexpected redirects to Home or other tabs
+- Bodyweight & Food:
+  - FAB opens create flow
+  - Save completes entry
+  - User is returned to History (not Home)
+- Session:
+  - Completing a session returns user to History
 
-Back navigation:
+Notes:
 
-- Back arrow returns users to the previous list/state
-- No loops or dead ends
-- Behaviour must be consistent across:
-  - Start session
-  - Log bodyweight
-  - Log food
+- Short-term implementation may still return to bodyweight/food list views
+- The intended end-state is that all creation flows return to History once unified
+- This task establishes the rule, even if enforcement is deferred
 
 Guardrails:
 
-- Do NOT introduce new routes unless strictly necessary
-- Prefer query params or existing mechanisms (e.g. `?new=1`)
-- Do NOT refactor History or Calendar yet
-- No changes to autosave, DB schema, or export/import
+- No History refactor yet
+- No calendar yet
+- No DB changes
 
 ---
 
-## Phase 11A – History Calendar Visualisation (Unified, Non-Evaluative)
+## Phase 11
+
+### Task 11.0 – Unified History list (foundation)
+
+Goal:
+Make History the single place to browse all logged activity.
+
+Changes:
+
+- History list includes:
+  - Sessions
+  - Bodyweight entries
+  - Food entries
+- Entries grouped by day (newest first)
+- Each item:
+  - Shows type label (Session / Bodyweight / Food)
+  - Shows timestamp
+  - Tap → opens detail/edit view
+
+Notes:
+
+- History becomes the primary (and eventually only) place to browse past logs
+
+Guardrails:
+
+- No calendar yet
+- No counts
+- No scoring or evaluation
+
+---
 
 ### Task 11A.1 – Add calendar visualisation to History
 
@@ -295,7 +318,6 @@ Guardrails:
 ### Task 11A.2 – Day detail interaction
 
 - Tapping a day focuses History on that day
-
   - Either via inline list filtering or a lightweight drawer/screen
 
 - Show a simple list of entries for that day:

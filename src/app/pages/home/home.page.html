@@ -5,11 +5,6 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  <!-- Primary CTA -->
-  <ion-button expand="block" size="large" class="start-session-btn" routerLink="/start-session">
-    Start Session
-  </ion-button>
-
   <!-- Loading State -->
   <ng-container *ngIf="isLoading">
     <ion-card class="status-card">
@@ -52,7 +47,7 @@
   <ng-container *ngIf="!isLoading && !momentum">
     <ion-card class="status-card">
       <ion-card-content>
-        <p class="empty-momentum">Start a session to begin tracking your momentum.</p>
+        <p class="empty-momentum">No activity yet. Your status will appear after you record your first session.</p>
       </ion-card-content>
     </ion-card>
   </ng-container>
@@ -75,9 +70,9 @@
     </ion-card>
   </ng-container>
 
-  <!-- Recent Sessions -->
+  <!-- Recent activity -->
   <div class="section-header">
-    <h2>Recent Sessions</h2>
+    <h2>Recent activity</h2>
     <button class="see-all-link" (click)="goToHistory()" *ngIf="recentSessions.length > 0">
       See all
     </button>

@@ -144,12 +144,12 @@ export class SessionSummaryPage implements OnInit, ViewWillEnter {
   }
 
   /**
-   * Navigate back to home.
-   * Navigate to /tabs and let the default redirect handle going to home.
-   * This ensures the tabs container is properly initialized and lifecycle hooks fire.
+   * Navigate to History tab after completing a session.
+   * Replaces the stack so back does not return to the summary screen.
    */
-  goHome(): void {
-    this.navController.navigateRoot('/tabs', {
+  goToHistory(): void {
+    this.navController.navigateRoot('/tabs/history', {
+      replaceUrl: true,
       animated: true,
       animationDirection: 'back'
     });
