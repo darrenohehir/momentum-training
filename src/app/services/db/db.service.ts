@@ -799,6 +799,19 @@ export class DbService extends Dexie {
   }
 
   /**
+   * Get bodyweight entries on or after a given date (bounded query for unified history).
+   * Sorted by loggedAt descending (newest first).
+   */
+  async getBodyweightEntriesSince(sinceDate: Date): Promise<BodyweightEntry[]> {
+    const sinceIso = sinceDate.toISOString();
+    return this.bodyweightEntries
+      .where('loggedAt')
+      .aboveOrEqual(sinceIso)
+      .reverse()
+      .toArray();
+  }
+
+  /**
    * Get a single bodyweight entry by id.
    */
   async getBodyweightEntry(id: string): Promise<BodyweightEntry | undefined> {
@@ -849,6 +862,19 @@ export class DbService extends Dexie {
    */
   async getFoodEntries(): Promise<FoodEntry[]> {
     return this.foodEntries.orderBy('loggedAt').reverse().toArray();
+  }
+
+  /**
+   * Get food entries on or after a given date (bounded query for unified history).
+   * Sorted by loggedAt descending (newest first).
+   */
+  async getFoodEntriesSince(sinceDate: Date): Promise<FoodEntry[]> {
+    const sinceIso = sinceDate.toISOString();
+    return this.foodEntries
+      .where('loggedAt')
+      .aboveOrEqual(sinceIso)
+      .reverse()
+      .toArray();
   }
 
   /**

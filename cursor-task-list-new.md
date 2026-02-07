@@ -305,6 +305,11 @@ Guardrails:
 - Use small, neutral markers (dots or icons) per log type
 - Do not show numbers in calendar cells
 
+**Notes:**
+
+- Calendar reads from the same underlying sources as unified History (sessions/bodyweight/food), bounded to month range.
+- Calendar should refresh on the same ActivityEventsService signal.
+
 **Guardrails**
 
 - Calendar is informational, not motivational

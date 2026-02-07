@@ -16,7 +16,7 @@
   <!-- Content -->
   <ng-container *ngIf="!isLoading">
     <!-- Insights Section (top) -->
-    <section class="insights-section" *ngIf="sessions.length > 0">
+    <section class="insights-section" *ngIf="sessionsLast4Weeks > 0 || recentPRs.length > 0">
       <h2 class="section-title">Insights</h2>
       <div class="insights-cards">
         <!-- Workouts per week card -->
@@ -57,34 +57,39 @@
       </div>
     </section>
 
-    <!-- History Section -->
+    <!-- Unified History Section -->
     <section class="history-section">
-      <h2 class="section-title" *ngIf="sessions.length > 0">Sessions</h2>
+      <h2 class="section-title">Activity</h2>
 
       <!-- Empty State -->
-      <div *ngIf="sessions.length === 0" class="empty-state">
+      <div *ngIf="unifiedGroups.length === 0" class="empty-state">
         <ion-icon name="calendar-outline"></ion-icon>
-        <h2>No sessions yet</h2>
-        <p>Completed sessions will appear here.</p>
+        <h2>No activity yet</h2>
+        <p>Sessions, bodyweight, and food logs will appear here.</p>
       </div>
 
-      <!-- Session List -->
-      <ion-list *ngIf="sessions.length > 0">
-        <ion-item
-          *ngFor="let session of sessions"
-          button
-          detail="true"
-          (click)="viewSession(session)"
-        >
-          <ion-label>
-            <h2>{{ getQuestName(session) }}</h2>
-            <p>
-              {{ formatDate(session.endedAt!) }}
-              <span *ngIf="getDuration(session) as duration"> · {{ duration }} min</span>
-            </p>
-          </ion-label>
-        </ion-item>
-      </ion-list>
+      <!-- Unified list grouped by day -->
+      <ng-container *ngIf="unifiedGroups.length > 0">
+        <div *ngFor="let group of unifiedGroups" class="day-group">
+          <h3 class="day-heading">{{ group.dateHeading }}</h3>
+          <ion-list class="history-list">
+            <ion-item
+              *ngFor="let item of group.items"
+              button
+              detail="true"
+              (click)="onHistoryItemClick(item)"
+            >
+              <ion-label>
+                <div class="history-item-header">
+                  <span class="history-item-type">{{ getHistoryItemTypeLabel(item.type) }}</span>
+                  <span class="history-item-time">{{ item.timeText }}</span>
+                </div>
+                <p class="history-item-secondary">{{ item.secondaryText }}</p>
+              </ion-label>
+            </ion-item>
+          </ion-list>
+        </div>
+      </ng-container>
     </section>
   </ng-container>
 </ion-content>

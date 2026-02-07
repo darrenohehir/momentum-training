@@ -1,8 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { ViewWillEnter } from '@ionic/angular';
-import { Session, QuestId, PREvent } from '../../models';
+import { ViewWillEnter, ViewWillLeave } from '@ionic/angular';
+import { Subscription } from 'rxjs';
+import { Session, QuestId, PREvent, BodyweightEntry, FoodEntry, deriveLocalDate } from '../../models';
 import { DbService } from '../../services/db';
+import { ActivityEventsService } from '../../services/events';
+import { formatDisplayDate, formatDisplayTime, truncateText } from '../../utils';
+
+/** Number of days to load for unified history list (bounded query). */
+const HISTORY_DAYS = 60;
 
 /** Quest ID to display name mapping */
 const QUEST_NAMES: Record<QuestId, string> = {
@@ -23,15 +29,35 @@ interface PRDisplayItem extends PREvent {
   exerciseName: string;
 }
 
+/** View model for a single item in the unified history list. */
+export interface HistoryItem {
+  type: 'session' | 'bodyweight' | 'food';
+  id: string;
+  loggedAt: string;
+  dayKey: string;
+  timeText: string;
+  secondaryText: string;
+}
+
+/** A day group in the unified history list (newest first). */
+export interface HistoryDayGroup {
+  dayKey: string;
+  dateHeading: string;
+  items: HistoryItem[];
+}
+
 @Component({
   selector: 'app-insights',
   templateUrl: './insights.page.html',
   styleUrls: ['./insights.page.scss'],
   standalone: false
 })
-export class InsightsPage implements OnInit, ViewWillEnter {
-  /** Completed sessions (newest first) */
+export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave {
+  /** Completed sessions (newest first) – used for weekly insights and PRs */
   sessions: Session[] = [];
+
+  /** Unified history list grouped by day (newest first) */
+  unifiedGroups: HistoryDayGroup[] = [];
 
   /** Loading state */
   isLoading = true;
@@ -45,48 +71,77 @@ export class InsightsPage implements OnInit, ViewWillEnter {
   /** Recent PRs with exercise names */
   recentPRs: PRDisplayItem[] = [];
 
+  /** True when this tab/page is visible (so we only refresh on activityChanged when active). */
+  private isActive = false;
+
+  /** Prevents overlapping loads when activityChanged fires. */
+  private isRefreshing = false;
+
+  private activityChangedSub: Subscription | null = null;
+
   constructor(
     private db: DbService,
-    private router: Router
+    private router: Router,
+    private activityEvents: ActivityEventsService
   ) {}
 
   ngOnInit(): void {
-    // Initial load handled by ionViewWillEnter
+    this.activityChangedSub = this.activityEvents.activityChanged$.subscribe(() => {
+      if (this.isActive && !this.isRefreshing) {
+        this.loadSessions();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.activityChangedSub) {
+      this.activityChangedSub.unsubscribe();
+      this.activityChangedSub = null;
+    }
   }
 
   /**
    * Ionic lifecycle hook: reload data when page becomes active.
    */
   async ionViewWillEnter(): Promise<void> {
+    this.isActive = true;
     await this.loadSessions();
   }
 
   /**
-   * Load completed sessions and recent PRs from IndexedDB.
-   * Uses bounded queries where possible for performance.
+   * Ionic lifecycle hook: mark page as not active when leaving.
+   */
+  ionViewWillLeave(): void {
+    this.isActive = false;
+  }
+
+  /**
+   * Load completed sessions, unified history (sessions + bodyweight + food), and recent PRs.
+   * Uses bounded queries (60-day window for unified list, 28-day for weekly insights).
    */
   private async loadSessions(): Promise<void> {
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
     this.isLoading = true;
     try {
-      // Calculate 28-day cutoff for weekly insights
       const fourWeeksAgo = new Date();
       fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - HISTORY_DAYS);
 
-      // Load all data in parallel using bounded queries
-      const [allSessions, sessionsLast28Days, prEvents] = await Promise.all([
-        this.db.getCompletedSessions(),           // Full history list (needs all)
-        this.db.getCompletedSessionsSince(fourWeeksAgo), // Bounded for weekly counts
-        this.db.getRecentPREvents(10)             // Bounded to 10
+      const [sessionsLast28Days, prEvents, sessionsSince60d, bodyweightSince60d, foodSince60d] = await Promise.all([
+        this.db.getCompletedSessionsSince(fourWeeksAgo),
+        this.db.getRecentPREvents(10),
+        this.db.getCompletedSessionsSince(sixtyDaysAgo),
+        this.db.getBodyweightEntriesSince(sixtyDaysAgo),
+        this.db.getFoodEntriesSince(sixtyDaysAgo)
       ]);
 
-      this.sessions = allSessions;
       this.calculateWeeklyInsights(sessionsLast28Days);
 
-      // Load exercise names for PRs
       if (prEvents.length > 0) {
         const exerciseIds = [...new Set(prEvents.map(pr => pr.exerciseId))];
         const exerciseMap = await this.db.getExercisesByIds(exerciseIds);
-
         this.recentPRs = prEvents.map(pr => ({
           ...pr,
           exerciseName: exerciseMap.get(pr.exerciseId)?.name || 'Unknown Exercise'
@@ -94,15 +149,100 @@ export class InsightsPage implements OnInit, ViewWillEnter {
       } else {
         this.recentPRs = [];
       }
+
+      this.unifiedGroups = this.buildUnifiedHistoryGroups(
+        sessionsSince60d,
+        bodyweightSince60d,
+        foodSince60d
+      );
     } catch (error) {
       console.error('Failed to load history data:', error);
-      this.sessions = [];
       this.sessionsLast4Weeks = 0;
       this.weeklyBreakdown = [];
       this.recentPRs = [];
+      this.unifiedGroups = [];
     } finally {
       this.isLoading = false;
+      this.isRefreshing = false;
     }
+  }
+
+  /**
+   * Build unified history items from sessions, bodyweight, and food; group by day (newest first).
+   */
+  private buildUnifiedHistoryGroups(
+    sessions: Session[],
+    bodyweightEntries: BodyweightEntry[],
+    foodEntries: FoodEntry[]
+  ): HistoryDayGroup[] {
+    const items: HistoryItem[] = [];
+
+    for (const s of sessions) {
+      const loggedAt = s.endedAt || s.startedAt;
+      if (!loggedAt) continue;
+      items.push({
+        type: 'session',
+        id: s.id,
+        loggedAt,
+        dayKey: deriveLocalDate(loggedAt),
+        timeText: formatDisplayTime(loggedAt),
+        secondaryText: this.getQuestNameForSession(s) || 'Completed session'
+      });
+    }
+
+    for (const b of bodyweightEntries) {
+      const notePreview = b.note?.trim() ? truncateText(b.note.trim(), 40) : '';
+      const secondary = `${b.weightKg} kg` + (notePreview ? ` · ${notePreview}` : '');
+      items.push({
+        type: 'bodyweight',
+        id: b.id,
+        loggedAt: b.loggedAt,
+        dayKey: b.date,
+        timeText: formatDisplayTime(b.loggedAt),
+        secondaryText: secondary
+      });
+    }
+
+    for (const f of foodEntries) {
+      const firstLine = f.text.split('\n')[0].trim() || 'Food log';
+      items.push({
+        type: 'food',
+        id: f.id,
+        loggedAt: f.loggedAt,
+        dayKey: f.date,
+        timeText: formatDisplayTime(f.loggedAt),
+        secondaryText: truncateText(firstLine, 50)
+      });
+    }
+
+    items.sort((a, b) => (b.loggedAt.localeCompare(a.loggedAt)));
+
+    const byDay = new Map<string, HistoryItem[]>();
+    for (const item of items) {
+      const list = byDay.get(item.dayKey) || [];
+      list.push(item);
+      byDay.set(item.dayKey, list);
+    }
+
+    const groups: HistoryDayGroup[] = Array.from(byDay.entries())
+      .map(([dayKey, dayItems]) => ({
+        dayKey,
+        dateHeading: formatDisplayDate(dayItems[0].loggedAt),
+        items: dayItems
+      }))
+      .sort((a, b) => b.dayKey.localeCompare(a.dayKey));
+
+    return groups;
+  }
+
+  /**
+   * Get quest name for a session (for display in history). Returns null if no quest.
+   */
+  private getQuestNameForSession(session: Session): string | null {
+    if (session.questId && QUEST_NAMES[session.questId]) {
+      return QUEST_NAMES[session.questId];
+    }
+    return null;
   }
 
   /**
@@ -174,22 +314,55 @@ export class InsightsPage implements OnInit, ViewWillEnter {
   }
 
   /**
-   * Navigate to session detail view.
+   * Navigate to session detail/summary view.
    */
-  viewSession(session: Session): void {
-    this.router.navigate(['/history', session.id]);
+  openSession(item: HistoryItem): void {
+    if (item.type !== 'session') return;
+    this.router.navigate(['/history', item.id]);
   }
 
   /**
-   * Format date for display (e.g., "Mon, Jan 6").
+   * Open bodyweight editor for the given entry (deep-link edit).
    */
-  formatDate(isoString: string): string {
-    const date = new Date(isoString);
-    return date.toLocaleDateString([], {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    });
+  openBodyweight(item: HistoryItem): void {
+    if (item.type !== 'bodyweight') return;
+    this.router.navigate(['/bodyweight'], { queryParams: { id: item.id } });
+  }
+
+  /**
+   * Open food editor for the given entry (deep-link edit).
+   */
+  openFood(item: HistoryItem): void {
+    if (item.type !== 'food') return;
+    this.router.navigate(['/food'], { queryParams: { id: item.id } });
+  }
+
+  /**
+   * Handle tap on a unified history item (routes to the correct detail/edit view).
+   */
+  onHistoryItemClick(item: HistoryItem): void {
+    switch (item.type) {
+      case 'session':
+        this.openSession(item);
+        break;
+      case 'bodyweight':
+        this.openBodyweight(item);
+        break;
+      case 'food':
+        this.openFood(item);
+        break;
+    }
+  }
+
+  /**
+   * Get type label for display (Session / Bodyweight / Food).
+   */
+  getHistoryItemTypeLabel(type: HistoryItem['type']): string {
+    switch (type) {
+      case 'session': return 'Session';
+      case 'bodyweight': return 'Bodyweight';
+      case 'food': return 'Food';
+    }
   }
 
   /**
@@ -203,25 +376,4 @@ export class InsightsPage implements OnInit, ViewWillEnter {
     });
   }
 
-  /**
-   * Calculate duration in minutes.
-   * Returns at least 1 minute for very short sessions.
-   */
-  getDuration(session: Session): number | null {
-    if (!session.startedAt || !session.endedAt) return null;
-    const start = new Date(session.startedAt).getTime();
-    const end = new Date(session.endedAt).getTime();
-    const minutes = Math.round((end - start) / (1000 * 60));
-    return Math.max(1, minutes);
-  }
-
-  /**
-   * Get quest name or fallback to "Session".
-   */
-  getQuestName(session: Session): string {
-    if (session.questId && QUEST_NAMES[session.questId]) {
-      return QUEST_NAMES[session.questId];
-    }
-    return 'Session';
-  }
 }

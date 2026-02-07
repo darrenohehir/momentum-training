@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController, ItemReorderEventDetail, ViewWillEnter } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import { DbService, LastAttemptResult } from '../../services/db';
-import { AppEventsService } from '../../services/events';
+import { ActivityEventsService, AppEventsService } from '../../services/events';
 import { UndoToastService } from '../../services/ui';
 import { XpService } from '../../services/xp';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
@@ -84,6 +84,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     private db: DbService,
     private modalController: ModalController,
     private appEvents: AppEventsService,
+    private activityEvents: ActivityEventsService,
     private undoToast: UndoToastService,
     private xpService: XpService
   ) {
@@ -327,6 +328,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
 
       // Notify other components that session data has changed
       this.appEvents.emitSessionDataChanged();
+      this.activityEvents.notifyActivityChanged();
 
       // Navigate to session summary
       this.router.navigate(['/session', this.session.id, 'summary']);

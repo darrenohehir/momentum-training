@@ -5,6 +5,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
 import { FoodEntry, deriveLocalDate } from '../../models';
 import { DbService } from '../../services/db';
+import { ActivityEventsService } from '../../services/events';
 import { UndoToastService } from '../../services/ui';
 import {
   generateUUID,
@@ -52,11 +53,18 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave
   private hasPendingSave = false;
   private saveSubscription: Subscription | null = null;
 
+  /** True when this page was opened via History deep-link (?id=); delete should return to History. */
+  private openedFromHistory = false;
+
+  /** When true, ngOnDestroy will not dismiss the undo toast (we just showed it and navigated to History). */
+  private leaveUndoToastVisibleOnDestroy = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private navController: NavController,
     private db: DbService,
+    private activityEvents: ActivityEventsService,
     private undoToast: UndoToastService
   ) {}
 
@@ -77,26 +85,42 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave
     this.destroy$.next();
     this.destroy$.complete();
     this.saveSubscription?.unsubscribe();
-    this.undoToast.dismiss();
+    if (!this.leaveUndoToastVisibleOnDestroy) {
+      this.undoToast.dismiss();
+    }
   }
 
   /**
    * Ionic lifecycle hook: reload data when page becomes active.
-   * Checks for ?new=1 query param to open create mode directly (from FAB).
+   * Supports ?new=1 (create mode from FAB) and ?id=<entryId> (edit mode from History deep-link).
    */
   async ionViewWillEnter(): Promise<void> {
+    this.leaveUndoToastVisibleOnDestroy = false;
+
     await this.loadEntries();
 
-    // Check for ?new=1 query param (from FAB quick-add)
+    const idParam = this.route.snapshot.queryParamMap.get('id');
+    if (idParam) {
+      const entry = await this.db.getFoodEntry(idParam);
+      if (entry) {
+        this.openedFromHistory = true;
+        this.editEntry(entry);
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+      }
+      return;
+    }
+
     const newParam = this.route.snapshot.queryParamMap.get('new');
     if (newParam === '1') {
-      // Clear the query param to avoid re-triggering on back/refresh
       this.router.navigate([], {
         relativeTo: this.route,
         queryParams: {},
         replaceUrl: true
       });
-      // Enter create mode
       this.startNewEntry();
     }
   }
@@ -264,6 +288,8 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave
       if (this.editingEntry?.id === entryToSave.id) {
         this.editingEntry = entryToSave;
       }
+
+      this.activityEvents.notifyActivityChanged();
     } catch (error) {
       console.error('Failed to save food entry:', error);
     }
@@ -315,25 +341,30 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave
    */
   async deleteEntry(entry: FoodEntry): Promise<void> {
     try {
-      // Delete from DB
       await this.db.deleteFoodEntry(entry.id);
 
-      // Remove from local list
       this.entries = this.entries.filter(e => e.id !== entry.id);
 
-      // If we're editing this entry, close the editor
-      if (this.editingEntry?.id === entry.id) {
+      const wasEditingThis = this.editingEntry?.id === entry.id;
+      if (wasEditingThis) {
         this.editingEntry = null;
         this.isNewEntry = false;
       }
 
-      // Show undo toast (dismisses any existing toast first)
+      this.activityEvents.notifyActivityChanged();
+
+      if (wasEditingThis && this.openedFromHistory) {
+        this.navController.navigateRoot('/tabs/history', { replaceUrl: true });
+        this.leaveUndoToastVisibleOnDestroy = true;
+      }
+
       await this.undoToast.present({
         message: 'Entry deleted',
         onUndo: async () => {
           try {
             await this.db.restoreFoodEntry(entry);
             await this.loadEntries();
+            this.activityEvents.notifyActivityChanged();
           } catch (error) {
             console.error('Failed to undo delete:', error);
           }

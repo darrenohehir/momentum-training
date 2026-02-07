@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ToastController } from '@ionic/angular';
 
-/** Duration the undo toast is shown (ms) */
+/** Duration the undo toast is shown (ms). Minimum 3500 recommended for reliable Undo tap. */
 const UNDO_DURATION_MS = 5000;
 
 /** Options for presenting an undo toast */
