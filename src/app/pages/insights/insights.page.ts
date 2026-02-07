@@ -101,6 +101,12 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   /** Prevents overlapping loads when activityChanged fires. */
   private isRefreshing = false;
 
+  /** Prevents overlapping calendar loads; one flight at a time. */
+  private calendarLoading = false;
+
+  /** When true, run one more calendar load after current one finishes (no stacking). */
+  private pendingCalendarReload = false;
+
   private activityChangedSub: Subscription | null = null;
 
   constructor(
@@ -180,7 +186,7 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
         foodSince60d
       );
 
-      await this.loadCalendarData();
+      this.refreshCalendar();
     } catch (error) {
       console.error('Failed to load history data:', error);
       this.sessionsLast4Weeks = 0;
@@ -209,11 +215,42 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   }
 
   /**
-   * Load calendar data for the displayed month (bounded range queries).
-   * Sessions: endedAt-in-range (completed) plus startedAt-in-range (merge by id) so
-   * in-progress or no-endedAt sessions mark the started day, matching History (endedAt || startedAt).
+   * Entry point for calendar refresh (month change or after loadSessions).
+   * Single-flight: if a load is in progress, schedules one more run when done.
+   */
+  refreshCalendar(): void {
+    if (this.calendarLoading) {
+      this.pendingCalendarReload = true;
+      return;
+    }
+    this.loadCalendarData();
+  }
+
+  /**
+   * Load calendar data with single-flight guard and optional one-time re-run.
    */
   private async loadCalendarData(): Promise<void> {
+    if (this.calendarLoading) {
+      this.pendingCalendarReload = true;
+      return;
+    }
+    this.calendarLoading = true;
+    try {
+      await this.loadCalendarDataInternal();
+    } finally {
+      this.calendarLoading = false;
+      if (this.pendingCalendarReload) {
+        this.pendingCalendarReload = false;
+        this.loadCalendarData();
+      }
+    }
+  }
+
+  /**
+   * Internal: run calendar range queries, build lookup, update grid.
+   * Sessions: endedAt-in-range plus startedAt-in-range (merge by id) to match History.
+   */
+  private async loadCalendarDataInternal(): Promise<void> {
     const start = this.getMonthStart(this.displayedCalendarMonth);
     const end = this.getMonthEnd(this.displayedCalendarMonth);
 
@@ -304,7 +341,7 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
       this.displayedCalendarMonth.getMonth() - 1,
       1
     );
-    this.loadCalendarData();
+    this.refreshCalendar();
   }
 
   /**
@@ -316,7 +353,7 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
       this.displayedCalendarMonth.getMonth() + 1,
       1
     );
-    this.loadCalendarData();
+    this.refreshCalendar();
   }
 
   /**
