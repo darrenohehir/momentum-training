@@ -44,6 +44,11 @@
     outline: none;
     border-color: var(--ion-color-primary);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--ion-color-primary);
+    outline-offset: 2px;
+  }
 }
 
 .weight-row {

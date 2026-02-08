@@ -1,7 +1,7 @@
 <ion-header>
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-button (click)="view === 'create' ? cancelCreate() : dismiss()">
+      <ion-button (click)="view === 'create' ? cancelCreate() : dismiss()" [attr.aria-label]="view === 'create' ? 'Back to exercise list' : 'Close'">
         <ion-icon slot="icon-only" [name]="view === 'create' ? 'arrow-back' : 'close'"></ion-icon>
       </ion-button>
     </ion-buttons>

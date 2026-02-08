@@ -9,7 +9,8 @@
       <ion-button 
         *ngIf="editingEntry" 
         fill="clear" 
-        (click)="cancelEdit()">
+        (click)="cancelEdit()"
+        aria-label="Back to food log">
         <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
@@ -18,14 +19,16 @@
       <!-- Add button (list view only) -->
       <ion-button 
         *ngIf="!editingEntry" 
-        (click)="startNewEntry()">
+        (click)="startNewEntry()"
+        aria-label="Add food entry">
         <ion-icon name="add-outline" slot="icon-only"></ion-icon>
       </ion-button>
       <!-- Delete button (edit view only, existing entries) -->
       <ion-button 
         *ngIf="editingEntry && !isNewEntry" 
         color="danger"
-        (click)="deleteEntry(editingEntry)">
+        (click)="deleteEntry(editingEntry)"
+        aria-label="Delete entry">
         <ion-icon name="trash-outline" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
