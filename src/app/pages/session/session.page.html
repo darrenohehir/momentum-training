@@ -122,8 +122,8 @@
               </div>
             </ng-container>
 
-            <!-- RPE Toggle -->
-            <div class="rpe-toggle">
+            <!-- RPE Toggle (strength only) -->
+            <div class="rpe-toggle" *ngIf="getSetLogType(item) === 'strength'">
               <ion-button
                 fill="clear"
                 size="small"
@@ -135,12 +135,21 @@
               </ion-button>
             </div>
 
-            <!-- Sets Header -->
-            <div class="sets-header" *ngIf="item.sets.length > 0">
+            <!-- Strength: Sets Header -->
+            <div class="sets-header" *ngIf="getSetLogType(item) === 'strength' && item.sets.length > 0">
               <span class="set-col set-label">Set</span>
               <span class="set-col weight-label">Weight (kg)</span>
               <span class="set-col reps-label">Reps</span>
               <span class="set-col rpe-label" *ngIf="item.showRpe">RPE</span>
+              <span class="set-col action-label"></span>
+            </div>
+
+            <!-- Cardio: Sets Header -->
+            <div class="sets-header sets-header--cardio" *ngIf="getSetLogType(item) !== 'strength' && item.sets.length > 0">
+              <span class="set-col set-label">Set</span>
+              <span class="set-col duration-label">Duration</span>
+              <span class="set-col distance-label">Distance</span>
+              <span class="set-col incline-label">Incline</span>
               <span class="set-col action-label"></span>
             </div>
 
@@ -149,8 +158,8 @@
               <ion-skeleton-text animated style="width: 100%; height: 40px;"></ion-skeleton-text>
             </div>
 
-            <!-- Sets List -->
-            <div class="sets-list" *ngIf="!item.isLoadingSets">
+            <!-- Strength Sets List -->
+            <div class="sets-list" *ngIf="!item.isLoadingSets && getSetLogType(item) === 'strength'">
               <div class="set-row" *ngFor="let set of item.sets; let setIdx = index">
                 <span class="set-col set-number">{{ set.setIndex + 1 }}</span>
                 <div class="set-col weight-input">
@@ -200,8 +209,68 @@
                   </ion-button>
                 </div>
               </div>
+              <div *ngIf="item.sets.length === 0" class="no-sets">
+                <p>No sets logged yet</p>
+              </div>
+            </div>
 
-              <!-- Empty Sets State -->
+            <!-- Cardio Sets List -->
+            <div class="sets-list sets-list--cardio" *ngIf="!item.isLoadingSets && getSetLogType(item) !== 'strength'">
+              <div class="set-row set-row--cardio" *ngFor="let set of item.sets; let setIdx = index">
+                <span class="set-col set-number">{{ set.setIndex + 1 }}</span>
+                <div class="set-col duration-inputs">
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    placeholder="0"
+                    [value]="durationMinutes(set)"
+                    (ionInput)="onDurationMinChange(set, $any($event).target.value)"
+                    (ionBlur)="onInputBlur(set)"
+                  ></ion-input>
+                  <span class="duration-sep">:</span>
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    min="0"
+                    max="59"
+                    placeholder="00"
+                    [value]="durationSeconds(set)"
+                    (ionInput)="onDurationSecChange(set, $any($event).target.value)"
+                    (ionBlur)="onInputBlur(set)"
+                  ></ion-input>
+                </div>
+                <div class="set-col distance-input">
+                  <ion-input
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="—"
+                    [value]="getDistanceKmForDisplay(set)"
+                    (ionInput)="onDistanceChange(set, $any($event).target.value)"
+                    (ionBlur)="onInputBlur(set)"
+                  ></ion-input>
+                </div>
+                <div class="set-col incline-input">
+                  <ion-input
+                    type="text"
+                    inputmode="decimal"
+                    placeholder="%"
+                    [value]="set.incline"
+                    (ionInput)="onInclineChange(set, $any($event).target.value)"
+                    (ionBlur)="onInputBlur(set)"
+                  ></ion-input>
+                </div>
+                <div class="set-col action-col">
+                  <ion-button
+                    fill="clear"
+                    size="small"
+                    color="danger"
+                    (click)="removeSet(item, set)"
+                  >
+                    <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                  </ion-button>
+                </div>
+              </div>
               <div *ngIf="item.sets.length === 0" class="no-sets">
                 <p>No sets logged yet</p>
               </div>

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewWillEnter, ViewWillLeave } from '@ionic/angular';
 import { Subscription } from 'rxjs';
-import { Session, QuestId, PREvent, BodyweightEntry, FoodEntry, deriveLocalDate } from '../../models';
+import { Session, QuestId, PREvent, BodyweightEntry, FoodEntry, Set, deriveLocalDate } from '../../models';
 import { DbService } from '../../services/db';
 import { ActivityEventsService } from '../../services/events';
 import { formatDisplayDate, formatDisplayTime, truncateText } from '../../utils';
@@ -186,10 +186,13 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
         this.recentPRs = [];
       }
 
+      const setsBySession = await this.db.getSetsBySessionIds(sessionsSince60d.map(s => s.id));
+      const sessionSummaries = this.buildSessionSummariesForHistory(sessionsSince60d, setsBySession);
       this.unifiedGroups = this.buildUnifiedHistoryGroups(
         sessionsSince60d,
         bodyweightSince60d,
-        foodSince60d
+        foodSince60d,
+        sessionSummaries
       );
 
       this.refreshCalendar();
@@ -408,25 +411,69 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   }
 
   /**
+   * Build session secondary text for History list when session has cardio/timed sets.
+   * Returns null for strength-only sessions (caller uses quest name or "Completed session").
+   */
+  private buildSessionCardioSummary(sets: Set[]): string | null {
+    const cardioOrTimed = sets.filter(
+      set => (set.kind ?? 'strength') === 'cardio' || (set.kind ?? 'strength') === 'timed'
+    );
+    if (cardioOrTimed.length === 0) return null;
+
+    let totalDurationSec = 0;
+    let totalDistanceKm = 0;
+    for (const set of cardioOrTimed) {
+      totalDurationSec += set.durationSec ?? 0;
+      if (set.distance != null) {
+        const km = set.distanceUnit === 'mi' ? set.distance * 1.60934 : set.distance;
+        totalDistanceKm += km;
+      }
+    }
+    const durationPart = totalDurationSec > 0 ? `${Math.round(totalDurationSec / 60)} min` : '';
+    const distancePart = totalDistanceKm > 0 ? `${totalDistanceKm.toFixed(1)} km` : '';
+    const parts = [durationPart, distancePart].filter(Boolean);
+    return parts.length > 0 ? parts.join(' · ') : null;
+  }
+
+  /**
+   * Build sessionId -> secondary text for sessions that have cardio/timed sets.
+   */
+  private buildSessionSummariesForHistory(
+    sessions: Session[],
+    setsBySession: Map<string, Set[]>
+  ): Map<string, string> {
+    const out = new Map<string, string>();
+    for (const s of sessions) {
+      const sets = setsBySession.get(s.id) ?? [];
+      const summary = this.buildSessionCardioSummary(sets);
+      if (summary) out.set(s.id, summary);
+    }
+    return out;
+  }
+
+  /**
    * Build unified history items from sessions, bodyweight, and food; group by day (newest first).
    */
   private buildUnifiedHistoryGroups(
     sessions: Session[],
     bodyweightEntries: BodyweightEntry[],
-    foodEntries: FoodEntry[]
+    foodEntries: FoodEntry[],
+    sessionSummaries?: Map<string, string>
   ): HistoryDayGroup[] {
     const items: HistoryItem[] = [];
 
     for (const s of sessions) {
       const loggedAt = s.endedAt || s.startedAt;
       if (!loggedAt) continue;
+      const secondaryText =
+        (sessionSummaries?.get(s.id) ?? this.getQuestNameForSession(s)) || 'Completed session';
       items.push({
         type: 'session',
         id: s.id,
         loggedAt,
         dayKey: deriveLocalDate(loggedAt),
         timeText: formatDisplayTime(loggedAt),
-        secondaryText: this.getQuestNameForSession(s) || 'Completed session'
+        secondaryText
       });
     }
 

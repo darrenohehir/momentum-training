@@ -16,6 +16,7 @@ export const DEFAULT_EXERCISES: Exercise[] = [
     name: 'Chest Press',
     category: 'chest',
     equipmentType: 'machine',
+    logType: 'strength',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -24,6 +25,7 @@ export const DEFAULT_EXERCISES: Exercise[] = [
     name: 'Bicep Curl',
     category: 'arms',
     equipmentType: 'dumbbell',
+    logType: 'strength',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   },
@@ -32,6 +34,7 @@ export const DEFAULT_EXERCISES: Exercise[] = [
     name: 'Treadmill',
     category: 'cardio',
     equipmentType: 'cardio',
+    logType: 'cardio',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }

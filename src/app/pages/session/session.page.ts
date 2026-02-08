@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ModalController, ItemReorderEventDetail, ViewWillEnter } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
+import type { ExerciseLogType } from '../../models';
 import { DbService, LastAttemptResult } from '../../services/db';
 import { ActivityEventsService, AppEventsService } from '../../services/events';
 import { UndoToastService } from '../../services/ui';
@@ -9,7 +10,7 @@ import { XpService } from '../../services/xp';
 import { ExercisePickerComponent } from '../../components/exercise-picker/exercise-picker.component';
 import { Subject } from 'rxjs';
 import { debounceTime, takeUntil } from 'rxjs/operators';
-import { generateUUID } from '../../utils';
+import { generateUUID, formatSetDisplay } from '../../utils';
 
 /** Map quest IDs to display labels */
 const QUEST_LABELS: Record<QuestId, string> = {
@@ -428,21 +429,40 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
   // ============================================
 
   /**
+   * Effective log type for this exercise (used to choose set editor).
+   */
+  getSetLogType(item: SessionExerciseView): ExerciseLogType {
+    return item.exercise.logType ?? 'strength';
+  }
+
+  /**
    * Add a new set to a session exercise.
+   * Creates a strength set (weight/reps) or cardio set (duration) based on exercise logType.
    */
   async addSet(item: SessionExerciseView): Promise<void> {
     try {
       const setIndex = await this.db.getNextSetIndex(item.sessionExercise.id);
-      const newSet: Set = {
-        id: generateUUID(),
-        sessionExerciseId: item.sessionExercise.id,
-        setIndex,
-        createdAt: new Date().toISOString()
-      };
+      const logType = this.getSetLogType(item);
+      const now = new Date().toISOString();
+
+      const newSet: Set =
+        logType === 'cardio' || logType === 'timed'
+          ? {
+              id: generateUUID(),
+              sessionExerciseId: item.sessionExercise.id,
+              setIndex,
+              kind: logType,
+              durationSec: 0,
+              createdAt: now
+            }
+          : {
+              id: generateUUID(),
+              sessionExerciseId: item.sessionExercise.id,
+              setIndex,
+              createdAt: now
+            };
 
       await this.db.addSet(newSet);
-
-      // Add to local list immediately
       item.sets.push(newSet);
     } catch (error) {
       console.error('Failed to add set:', error);
@@ -509,6 +529,67 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     this.queueSetUpdate(set);
   }
 
+  /** Duration minutes from durationSec (for binding). */
+  durationMinutes(set: Set): number {
+    const sec = set.durationSec ?? 0;
+    return Math.floor(sec / 60);
+  }
+
+  /** Duration seconds from durationSec (for binding). */
+  durationSeconds(set: Set): number {
+    return (set.durationSec ?? 0) % 60;
+  }
+
+  /**
+   * Handle cardio duration minutes change (debounced).
+   */
+  onDurationMinChange(set: Set, value: string): void {
+    const min = this.parseNonNegativeInt(value);
+    const sec = (set.durationSec ?? 0) % 60;
+    set.durationSec = (min ?? 0) * 60 + sec;
+    this.queueSetUpdate(set);
+  }
+
+  /**
+   * Handle cardio duration seconds change (debounced).
+   */
+  onDurationSecChange(set: Set, value: string): void {
+    const s = this.parseNonNegativeInt(value);
+    const min = Math.floor((set.durationSec ?? 0) / 60);
+    set.durationSec = min * 60 + (s ?? 0);
+    this.queueSetUpdate(set);
+  }
+
+  /**
+   * Distance in km for display (cardio row). Converts mi to km when stored unit is mi.
+   */
+  getDistanceKmForDisplay(set: Set): number | undefined {
+    if (set.distance === undefined || set.distance === null) return undefined;
+    return set.distanceUnit === 'mi' ? set.distance * 1.60934 : set.distance;
+  }
+
+  /**
+   * Handle cardio distance change (debounced). Persists in km; sets distanceUnit to 'km' when value present.
+   */
+  onDistanceChange(set: Set, value: string): void {
+    const parsed = this.parseDistance(value);
+    set.distance = parsed;
+    if (parsed !== undefined && parsed > 0) {
+      set.distanceUnit = 'km';
+    } else {
+      set.distanceUnit = undefined;
+    }
+    this.queueSetUpdate(set);
+  }
+
+  /**
+   * Handle cardio incline change (debounced).
+   */
+  onInclineChange(set: Set, value: string): void {
+    set.incline = this.parseIncline(value);
+    this.queueSetUpdate(set);
+  }
+
   /**
    * Handle input blur - persist immediately.
    */
@@ -566,6 +647,27 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     return Math.max(1, Math.min(10, num));
   }
 
+  /** Parse non-negative integer for duration min/sec. */
+  private parseNonNegativeInt(value: string): number | undefined {
+    if (value === '' || value.trim() === '') return undefined;
+    const num = parseInt(value, 10);
+    return isNaN(num) || num < 0 ? undefined : num;
+  }
+
+  /** Parse distance (decimal). */
+  private parseDistance(value: string): number | undefined {
+    if (!value || value.trim() === '') return undefined;
+    const num = parseFloat(value);
+    return isNaN(num) || num < 0 ? undefined : num;
+  }
+
+  /** Parse incline (0–100). */
+  private parseIncline(value: string): number | undefined {
+    if (!value || value.trim() === '') return undefined;
+    const num = parseFloat(value);
+    return isNaN(num) || num < 0 ? undefined : Math.min(100, num);
+  }
+
   /**
    * Format start time for display.
    */
@@ -619,13 +721,10 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   /**
-   * Format a ghost set for display.
-   * Returns "{weight} kg × {reps}" with graceful handling of missing values.
+   * Format a ghost set for display (strength or cardio).
    */
   formatGhostSet(set: Set): string {
-    const weightStr = set.weight !== undefined ? `${set.weight} kg` : '—';
-    const repsStr = set.reps !== undefined ? `${set.reps}` : '—';
-    return `${weightStr} × ${repsStr}`;
+    return formatSetDisplay(set);
   }
 
   /**
@@ -651,17 +750,33 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     try {
       const now = new Date().toISOString();
 
-      // Create new Set records from the ghost sets
-      const newSets: Set[] = ghost.sets.map((templateSet, index) => ({
-        id: generateUUID(),
-        sessionExerciseId: item.sessionExercise.id,
-        setIndex: index,
-        weight: templateSet.weight,
-        reps: templateSet.reps,
-        rpe: templateSet.rpe,
-        isWarmup: templateSet.isWarmup,
-        createdAt: now
-      }));
+      const logType = this.getSetLogType(item);
+      const newSets: Set[] = ghost.sets.map((templateSet, index) => {
+        const base = {
+          id: generateUUID(),
+          sessionExerciseId: item.sessionExercise.id,
+          setIndex: index,
+          createdAt: now
+        };
+        const kind = templateSet.kind ?? 'strength';
+        if (kind === 'cardio' || kind === 'timed') {
+          return {
+            ...base,
+            kind: templateSet.kind ?? kind,
+            durationSec: templateSet.durationSec,
+            distance: templateSet.distance,
+            distanceUnit: templateSet.distanceUnit,
+            incline: templateSet.incline
+          };
+        }
+        return {
+          ...base,
+          weight: templateSet.weight,
+          reps: templateSet.reps,
+          rpe: templateSet.rpe,
+          isWarmup: templateSet.isWarmup
+        };
+      });
 
       // Persist all sets in a single transaction
       await this.db.bulkAddSets(newSets);

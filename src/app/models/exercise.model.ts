@@ -1,4 +1,9 @@
 /**
+ * How an exercise is logged (which editor to use). Omit = strength for backward compatibility.
+ */
+export type ExerciseLogType = 'strength' | 'cardio' | 'timed';
+
+/**
  * Exercise category for grouping and filtering.
  */
 export type ExerciseCategory =
@@ -35,6 +40,8 @@ export interface Exercise {
   category: ExerciseCategory;
   /** Equipment used */
   equipmentType: EquipmentType;
+  /** How this exercise is logged (strength / cardio / timed). Omit → treat as strength. */
+  logType?: ExerciseLogType;
   /** Optional user notes */
   notes?: string;
   /** ISO 8601 timestamp */

@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { NavController } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, Set } from '../../models';
 import { DbService } from '../../services/db';
+import { formatSetDisplay } from '../../utils';
 
 /**
  * View model for displaying an exercise with its sets in history.
@@ -145,9 +146,7 @@ export class HistoryDetailPage implements OnInit {
    * Format a set for display (weight × reps).
    */
   formatSet(set: Set): string {
-    const weightStr = set.weight !== undefined ? `${set.weight} kg` : '—';
-    const repsStr = set.reps !== undefined ? `${set.reps}` : '—';
-    return `${weightStr} × ${repsStr}`;
+    return formatSetDisplay(set);
   }
 
   /**

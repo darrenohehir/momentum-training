@@ -393,6 +393,36 @@ export class DbService extends Dexie {
   }
 
   /**
+   * Get all sets for the given sessions (batch). Returns a map sessionId -> Set[].
+   * Used for History list session summaries (cardio/timed).
+   */
+  async getSetsBySessionIds(sessionIds: string[]): Promise<Map<string, Set[]>> {
+    const result = new Map<string, Set[]>();
+    if (sessionIds.length === 0) return result;
+
+    const sessionExercises = await this.sessionExercises
+      .where('sessionId')
+      .anyOf(sessionIds)
+      .toArray();
+
+    const seIds = sessionExercises.map(se => se.id);
+    if (seIds.length === 0) return result;
+
+    const seToSessionId = new Map(sessionExercises.map(se => [se.id, se.sessionId]));
+    const sets = await this.sets.where('sessionExerciseId').anyOf(seIds).toArray();
+
+    for (const set of sets) {
+      const sessionId = seToSessionId.get(set.sessionExerciseId);
+      if (sessionId) {
+        const list = result.get(sessionId) ?? [];
+        list.push(set);
+        result.set(sessionId, list);
+      }
+    }
+    return result;
+  }
+
+  /**
    * Add a session exercise.
    * @returns The session exercise id
    */
