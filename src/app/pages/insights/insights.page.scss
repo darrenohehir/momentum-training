@@ -336,13 +336,19 @@
   }
 
   .day-heading {
+    position: sticky;
+    top: -1rem;
+    z-index: 1;
     font-size: 0.8rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    opacity: 0.6;
     margin: 0 0 8px 0;
-    padding: 0 4px;
+    padding: 6px 4px 6px 4px;
+    background: var(--ion-background-color);
+    /* Prevent content bleed-through when stuck */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   .history-list {
