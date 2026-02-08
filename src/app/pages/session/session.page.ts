@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModalController, ItemReorderEventDetail, ViewWillEnter } from '@ionic/angular';
+import { ModalController, ToastController, ItemReorderEventDetail, ViewWillEnter } from '@ionic/angular';
 import { Session, SessionExercise, Exercise, QuestId, Set } from '../../models';
 import type { ExerciseLogType } from '../../models';
 import { DbService, LastAttemptResult } from '../../services/db';
@@ -87,7 +87,8 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     private appEvents: AppEventsService,
     private activityEvents: ActivityEventsService,
     private undoToast: UndoToastService,
-    private xpService: XpService
+    private xpService: XpService,
+    private toastController: ToastController
   ) {
     // Set up debounced auto-save for set updates
     this.setUpdateSubject.pipe(
@@ -310,11 +311,77 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   /**
+   * Whether a set is an empty draft (no meaningful data). Empty sets are ignored for finish validation.
+   * Uses set.kind ?? 'strength' for backward compat with sets created before kind existed.
+   */
+  private isSetEmpty(set: Set): boolean {
+    const kind = set.kind ?? 'strength';
+    if (kind === 'cardio' || kind === 'timed') {
+      return (
+        (set.durationSec ?? 0) <= 0 &&
+        (set.distance ?? 0) <= 0 &&
+        (set.incline ?? 0) <= 0
+      );
+    }
+    return (
+      (set.reps ?? 0) <= 0 &&
+      (set.weight ?? 0) <= 0 &&
+      (set.rpe ?? 0) <= 0
+    );
+  }
+
+  /**
+   * Whether a single set has valid required fields (strength: reps > 0; cardio/timed: durationSec > 0).
+   * Uses set.kind ?? 'strength' for backward compat.
+   */
+  private isSetValid(set: Set): boolean {
+    const kind = set.kind ?? 'strength';
+    if (kind === 'cardio' || kind === 'timed') {
+      return (set.durationSec ?? 0) > 0;
+    }
+    return (set.reps ?? 0) > 0;
+  }
+
+  /**
+   * Whether the session can be finished (all non-empty sets have required fields).
+   */
+  canFinishSession(): boolean {
+    for (const item of this.sessionExercises) {
+      for (const set of item.sets) {
+        if (this.isSetEmpty(set)) continue;
+        if (!this.isSetValid(set)) return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Factual message when session cannot be finished due to incomplete sets.
+   */
+  getInvalidFinishMessage(): string | null {
+    return this.canFinishSession()
+      ? null
+      : 'Add reps to all strength sets and duration to all cardio sets.';
+  }
+
+  /**
    * Finish the current session.
    * Updates endedAt and updatedAt, awards XP, then navigates to summary.
    */
   async finishSession(): Promise<void> {
     if (!this.session || this.isFinishing) return;
+    if (!this.canFinishSession()) {
+      const message = this.getInvalidFinishMessage();
+      if (message) {
+        const toast = await this.toastController.create({
+          message,
+          duration: 4000,
+          position: 'bottom'
+        });
+        await toast.present();
+      }
+      return;
+    }
 
     this.isFinishing = true;
     try {
@@ -430,9 +497,18 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
 
   /**
    * Effective log type for this exercise (used to choose set editor).
+   * When logType is missing: infer from sets (cardio/timed) or from known exercise names (e.g. treadmill).
    */
   getSetLogType(item: SessionExerciseView): ExerciseLogType {
-    return item.exercise.logType ?? 'strength';
+    if (item.exercise.logType != null) return item.exercise.logType;
+    const kindFromSet = item.sets.find(
+      s => (s.kind ?? 'strength') === 'cardio' || (s.kind ?? 'strength') === 'timed'
+    );
+    if (kindFromSet?.kind) return kindFromSet.kind;
+    const n = (item.exercise.name || '').trim().toLowerCase();
+    if (n.includes('treadmill') || ['row', 'bike', 'cycle', 'spin'].some(k => n.includes(k))) return 'cardio';
+    if (n.includes('plank')) return 'timed';
+    return 'strength';
   }
 
   /**
@@ -758,7 +834,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
           setIndex: index,
           createdAt: now
         };
-        const kind = templateSet.kind ?? 'strength';
+        const kind = templateSet.kind ?? 'strength'; // backward compat: legacy sets have no kind
         if (kind === 'cardio' || kind === 'timed') {
           return {
             ...base,

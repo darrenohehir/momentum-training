@@ -413,6 +413,7 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   /**
    * Build session secondary text for History list when session has cardio/timed sets.
    * Returns null for strength-only sessions (caller uses quest name or "Completed session").
+   * Uses set.kind ?? 'strength' so legacy sets without kind are treated as strength.
    */
   private buildSessionCardioSummary(sets: Set[]): string | null {
     const cardioOrTimed = sets.filter(

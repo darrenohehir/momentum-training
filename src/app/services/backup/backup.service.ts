@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DbService } from '../db';
 import { ExportPayload, ExportData, SCHEMA_VERSION } from '../../models';
+import type { Exercise, ExerciseLogType } from '../../models';
 
 /**
  * Result of an import validation.
@@ -228,6 +229,32 @@ export class BackupService {
   }
 
   /**
+   * Infer logType from exercise name when logType is missing (legacy imports).
+   * Case-insensitive, trimmed. Does not overwrite explicit logType.
+   */
+  private inferLogTypeFromName(name: string): ExerciseLogType | undefined {
+    if (!name || typeof name !== 'string') return undefined;
+    const n = name.trim().toLowerCase();
+    if (n.includes('treadmill')) return 'cardio';
+    if (['row', 'bike', 'cycle', 'spin'].some(k => n.includes(k))) return 'cardio';
+    if (n.includes('plank')) return 'timed';
+    return undefined;
+  }
+
+  /**
+   * Normalize exercises: set logType from name when missing (for legacy imports).
+   * Does not overwrite existing logType.
+   */
+  private normalizeExercisesLogType(exercises: Exercise[]): void {
+    for (const ex of exercises) {
+      if (ex.logType === undefined || ex.logType === null) {
+        const inferred = this.inferLogTypeFromName(ex.name);
+        if (inferred) (ex as { logType?: ExerciseLogType }).logType = inferred;
+      }
+    }
+  }
+
+  /**
    * Import data from a validated payload.
    * This replaces ALL existing data with the imported data.
    *
@@ -241,9 +268,11 @@ export class BackupService {
    * @throws Error if import fails (transaction will have been rolled back)
    */
   async importFromPayload(payload: ExportPayload): Promise<void> {
-    // Ensure data object exists with default empty arrays for missing fields
+    const exercises = payload.data.exercises || [];
+    this.normalizeExercisesLogType(exercises);
+
     const data: ExportData = {
-      exercises: payload.data.exercises || [],
+      exercises,
       sessions: payload.data.sessions || [],
       sessionExercises: payload.data.sessionExercises || [],
       sets: payload.data.sets || [],

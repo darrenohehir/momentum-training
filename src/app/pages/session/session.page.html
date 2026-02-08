@@ -311,11 +311,14 @@
     </div>
 
     <!-- Finish Session Button -->
+    <p class="finish-session-hint" *ngIf="!canFinishSession() && sessionExercises.length > 0">
+      Complete all sets: reps for strength, duration for cardio.
+    </p>
     <ion-button
       expand="block"
       class="finish-session-button"
       (click)="finishSession()"
-      [disabled]="isFinishing"
+      [disabled]="isFinishing || !canFinishSession()"
     >
       <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
       {{ isFinishing ? 'Finishing...' : 'Finish Session' }}

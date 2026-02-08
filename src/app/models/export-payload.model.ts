@@ -16,15 +16,20 @@ export const SCHEMA_VERSION = 4;
 /**
  * Data container within ExportPayload.
  * Each field is an array of the respective entity type.
+ *
+ * Backward compatibility:
+ * - Set may include optional cardio fields (kind, durationSec, distance, distanceUnit, incline).
+ *   Missing fields are allowed; import and app treat missing kind as 'strength'.
+ * - Exercise may include optional logType. Missing logType is treated as 'strength'.
  */
 export interface ExportData {
-  /** All exercises */
+  /** All exercises (may include optional logType) */
   exercises: Exercise[];
   /** All sessions */
   sessions: Session[];
   /** All session-exercise links */
   sessionExercises: SessionExercise[];
-  /** All sets */
+  /** All sets (may include optional kind, durationSec, distance, distanceUnit, incline) */
   sets: Set[];
   /** All bodyweight entries */
   bodyweightEntries: BodyweightEntry[];

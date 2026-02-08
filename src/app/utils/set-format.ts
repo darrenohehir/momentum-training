@@ -4,6 +4,7 @@ import { Set } from '../models';
  * Format a set for display (in-session or history).
  * Strength: "weight kg × reps"
  * Cardio/timed: "MM:SS · X.X km · Y%" (duration required; distance and incline optional)
+ * Uses set.kind ?? 'strength' for backward compat with legacy strength-only sets.
  */
 export function formatSetDisplay(set: Set): string {
   const kind = set.kind ?? 'strength';
