@@ -7,6 +7,7 @@ export type ExerciseLogType = 'strength' | 'cardio' | 'timed';
  * Exercise category for grouping and filtering.
  */
 export type ExerciseCategory =
+  | 'full-body'
   | 'chest'
   | 'back'
   | 'shoulders'
