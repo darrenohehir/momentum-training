@@ -106,7 +106,7 @@
   }
 
   &--day {
-    background: var(--ion-color-step-100);
+    background: var(--ion-card-background);
   }
 }
 
@@ -152,7 +152,7 @@
   padding: 0 2px;
 
   ion-segment {
-    --background: var(--ion-color-step-100);
+    --background: var(--ion-card-background);
     border-radius: 8px;
     min-height: 36px;
   }
@@ -268,7 +268,6 @@
       font-weight: 500;
     }
 
-    // Weekly breakdown (per-week counts)
     .weekly-breakdown {
       margin-top: 6px;
       font-size: 0.75rem;
@@ -276,9 +275,31 @@
       font-family: 'IBM Plex Mono', monospace;
     }
 
-    // PR count
     .pr-count {
       font-size: 1.1rem;
+      font-weight: 500;
+    }
+  }
+
+  // Lead card: sessions summary (slightly more prominent per DESIGN_CRITIQUE)
+  .workouts-card {
+    ion-card-content {
+      padding: 16px;
+    }
+    .insight-value {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+  }
+
+  // Secondary card: PR count (compact, clearly secondary)
+  .prs-card {
+    ion-card-content {
+      padding: 12px 16px;
+    }
+    .insight-value,
+    .pr-count {
+      font-size: 1rem;
       font-weight: 500;
     }
   }
@@ -302,7 +323,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 12px;
-    background: var(--ion-color-step-100);
+    background: var(--ion-card-background);
     border-radius: 6px;
     margin-bottom: 6px;
 
@@ -355,7 +376,7 @@
     background: transparent;
 
     ion-item {
-      --background: var(--ion-color-step-100);
+      --background: var(--ion-card-background);
       margin-bottom: 8px;
       border-radius: 8px;
 

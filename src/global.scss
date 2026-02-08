@@ -3,18 +3,19 @@
  * ----------------------------------------------------------------------------
  * Dark "instrument panel" theme applied globally.
  * See DESIGN.md for color system and guidelines.
+ * Theme variables (colors, --ion-font-family) live in src/theme/variables.scss.
  */
 
-/* Core CSS required for Ionic components to work properly */
+/* Required: core.css — required for Ionic components and color property */
 @import "@ionic/angular/css/core.css";
 
-/* Basic CSS for apps built with Ionic */
+/* Recommended: normalize, structure, typography, display (per Ionic global stylesheets) */
 @import "@ionic/angular/css/normalize.css";
 @import "@ionic/angular/css/structure.css";
 @import "@ionic/angular/css/typography.css";
 @import "@ionic/angular/css/display.css";
 
-/* Optional CSS utils */
+/* Optional: CSS utilities */
 @import "@ionic/angular/css/padding.css";
 @import "@ionic/angular/css/float-elements.css";
 @import "@ionic/angular/css/text-alignment.css";
