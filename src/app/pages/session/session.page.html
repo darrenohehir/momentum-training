@@ -315,18 +315,20 @@
       </ion-button>
     </div>
 
-    <!-- Finish Session Button -->
-    <p class="finish-session-hint" *ngIf="!canFinishSession() && sessionExercises.length > 0">
-      Complete all sets: reps for strength, duration for cardio.
-    </p>
-    <ion-button
-      expand="block"
-      class="finish-session-button"
-      (click)="finishSession()"
-      [disabled]="isFinishing || !canFinishSession()"
-    >
-      <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
-      {{ isFinishing ? 'Finishing...' : 'Finish Session' }}
-    </ion-button>
+    <!-- Finish Session Button (hidden when editing a completed session to avoid overwriting endedAt) -->
+    <ng-container *ngIf="!session.endedAt">
+      <p class="finish-session-hint" *ngIf="!canFinishSession() && sessionExercises.length > 0">
+        Complete all sets: reps for strength, duration for cardio.
+      </p>
+      <ion-button
+        expand="block"
+        class="finish-session-button"
+        (click)="finishSession()"
+        [disabled]="isFinishing || !canFinishSession()"
+      >
+        <ion-icon slot="start" name="checkmark-circle-outline"></ion-icon>
+        {{ isFinishing ? 'Finishing...' : 'Finish Session' }}
+      </ion-button>
+    </ng-container>
   </ng-container>
 </ion-content>

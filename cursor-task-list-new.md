@@ -399,26 +399,29 @@ Guardrails:
 
 ---
 
-## Phase 12 – PWA & Offline Validation (after multi-log exists)
+## Phase 12 – Offline, Persistence & Installability Validation
 
-### Task 12.1 – Offline test
+### Task 12.1 – Offline-first verification
 
 - Install PWA
-- Disable internet
-- Verify:
+- Disable internet (airplane mode)
+- Verify core flows work offline:
   - Start session
   - Log sets
   - Finish session
   - Log food
   - Log bodyweight
-  - Data persists on reload
+- Reload app
+- Confirm all data persists
 
-### Task 12.2 – Storage resilience check
+### Task 12.2 – Persistence & rehydration
 
-- Refresh app
+- Hard refresh app
 - Restart browser/device
-- Confirm IndexedDB data intact
-- Confirm calendar accurately reflects stored data after reload
+- Confirm:
+  - IndexedDB data intact
+  - History list correct
+  - Calendar markers correct for current month
 
 ---
 

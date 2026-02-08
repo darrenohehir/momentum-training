@@ -369,18 +369,18 @@
 
         &--session {
           border-radius: 50%;
-          background: rgba(var(--ion-color-primary-rgb), 0.85);
+          background: rgba(var(--ion-color-primary-rgb), 1);
         }
 
         &--bodyweight {
           border-radius: 1px;
-          background: rgba(var(--ion-color-warning-rgb), 0.8);
+          background: rgba(var(--ion-color-warning-rgb), 1);
         }
 
         &--food {
           border-radius: 50%;
           background: transparent;
-          border: 2px solid rgba(var(--ion-color-success-rgb), 0.75);
+          border: 2px solid rgba(var(--ion-color-success-rgb), 1);
         }
       }
 

@@ -190,13 +190,16 @@ export class FoodPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillLeave
   }
 
   /**
-   * Cancel editing and return to list.
+   * Cancel editing and return to list, or to History when opened from History.
    * Flushes any pending save before exiting edit mode.
    */
   async cancelEdit(): Promise<void> {
     await this.flushPendingSave();
     this.editingEntry = null;
     this.isNewEntry = false;
+    if (this.openedFromHistory) {
+      this.navController.navigateRoot('/tabs/history', { replaceUrl: true });
+    }
   }
 
   /**
