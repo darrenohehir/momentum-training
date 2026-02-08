@@ -129,3 +129,39 @@ Any future enhancement should:
 
 - Changing the visible calendar month does not filter or affect the History list.
 - The calendar is an informational overlay only.
+
+---
+
+## Swipe gestures for calendar month switching
+
+---
+
+## BUGFIX: Opening a session (Edit view) there's no way to cancel
+
+- If you dismiss a session edit page via header checkmark button, it won't update ended at time if inputs are unchanged.
+- However, if you dismiss a session edit page via footer `Finish session` button, this displays the summary screen and updates the `Ended` time to current date/time.
+- This means if you click into a session log from a long time ago, and accidentally dismiss via the footer button, it updates to the current date/time incorrectly.
+- Potentially solved by disabling the footer button until inputs are changed. Or by not updating the ended at time if inputs are unchanged.
+
+- There's no way for the user to edit start or end dates/times for sessions. I appreciate the UX in terms of assuming the current date and time, but I anticipate forgetting to log a session until the next day in which case for accurate logging being able to change the date/time is ideal. I wonder if using the session summary as a way to provide editable date/time inputs is a solution here.
+
+---
+
+## Add more seeded exercises beyond the 3 already added
+
+---
+
+## Refactor `Recent activity` on the home page
+
+- The session items on the home page under `Recent activity` display a view-only page which should be deprecated.
+- This could be replaced with something else - 'stats'?
+
+---
+
+## If the user adds their own exercise like `Barbell Row` the keyword `row` incorrectly identifies it as a cardio exercise.
+
+---
+
+## When adding a new exercise via session logging flow, the `Exercises` tab does not reflect the newly added exercise until refresh
+
+---

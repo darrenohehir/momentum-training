@@ -602,11 +602,11 @@ export class InsightsPage implements OnInit, OnDestroy, ViewWillEnter, ViewWillL
   }
 
   /**
-   * Navigate to session detail/summary view.
+   * Navigate to session editor (direct edit; no read-only History Detail).
    */
   openSession(item: HistoryItem): void {
     if (item.type !== 'session') return;
-    this.router.navigate(['/history', item.id]);
+    this.router.navigate(['/session', item.id]);
   }
 
   /**

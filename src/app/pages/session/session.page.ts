@@ -365,6 +365,14 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
   }
 
   /**
+   * Return to History tab (replaces current entry so back does not return to editor).
+   */
+  goToHistory(): void {
+    this.activityEvents.notifyActivityChanged();
+    this.router.navigate(['/tabs/history'], { replaceUrl: true });
+  }
+
+  /**
    * Finish the current session.
    * Updates endedAt and updatedAt, awards XP, then navigates to summary.
    */
@@ -428,17 +436,16 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
 
       // Remove from local array
       this.sessionExercises.splice(index, 1);
+      this.activityEvents.notifyActivityChanged();
 
       // Show undo toast (dismisses any existing toast first)
       await this.undoToast.present({
         message: 'Exercise removed',
         onUndo: async () => {
           try {
-            // Restore to IndexedDB
             await this.db.restoreSessionExercise(item.sessionExercise, item.sets);
-
-            // Restore to local array at original position
             this.sessionExercises.splice(index, 0, item);
+            this.activityEvents.notifyActivityChanged();
           } catch (error) {
             console.error('Failed to undo exercise removal:', error);
           }
@@ -485,6 +492,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
     // Persist to IndexedDB (non-blocking, no UI feedback)
     try {
       await this.db.updateSessionExerciseOrder(updates);
+      this.activityEvents.notifyActivityChanged();
     } catch (error) {
       console.error('Failed to persist exercise order:', error);
       // Note: local state already updated; reload would fix any inconsistency
@@ -540,6 +548,7 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
 
       await this.db.addSet(newSet);
       item.sets.push(newSet);
+      this.activityEvents.notifyActivityChanged();
     } catch (error) {
       console.error('Failed to add set:', error);
     }
@@ -558,13 +567,11 @@ export class SessionPage implements OnInit, OnDestroy, ViewWillEnter {
         item.sets.splice(index, 1);
       }
 
-      // Reindex remaining sets
       await this.db.reindexSets(item.sessionExercise.id);
-
-      // Update local setIndex values to match
       item.sets.forEach((s, i) => {
         s.setIndex = i;
       });
+      this.activityEvents.notifyActivityChanged();
     } catch (error) {
       console.error('Failed to remove set:', error);
     }
